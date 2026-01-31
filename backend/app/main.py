@@ -1,86 +1,23 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-from . import models, schemas
-from .database import SessionLocal, engine
+from fastapi import FastAPI
+from .database import engine, Base
+from .api.endpoints import vehicles, financials, documents, estimate, auth
 
-models.Base.metadata.create_all(bind=engine) # Creates tables on startup
+# Create all tables in the database
+Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(
+    title="Clearing & Logistics ERP",
+    description="API for managing vehicle clearing, financials, and document storage.",
+    version="0.1.0"
+)
 
-# Dependency to get database session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-        
 @app.get("/")
 def health_check():
     return {"status": "System is Online", "path": "Happy Path"}
 
-@app.post("/vehicles/", response_model=schemas.VehicleResponse)
-def create_vehicle(vehicle: schemas.VehicleCreate, db: Session = Depends(get_db)):
-    # Check if VIN already exists
-    db_vehicle = db.query(models.Vehicle).filter(models.Vehicle.vin == vehicle.vin).first()
-    if db_vehicle:
-        raise HTTPException(status_code=400, detail="VIN already registered")
-    
-    # Create the new record
-    new_vehicle = models.Vehicle(**vehicle.model_dump())
-    db.add(new_vehicle)
-    db.commit()
-    db.refresh(new_vehicle)
-    return new_vehicle
-
-# READ: The "List" part of the Happy Path
-@app.get("/vehicles/", response_model=list[schemas.VehicleResponse])
-def get_vehicles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    vehicles = db.query(models.Vehicle).offset(skip).limit(limit).all()
-    return vehicles
-
-
-@app.get("/vehicles/{vehicle_id}", response_model=schemas.VehicleResponse)
-def get_vehicle(vehicle_id: int, db: Session = Depends(get_db)):
-    db_vehicle = db.query(models.Vehicle).filter(models.Vehicle.id == vehicle_id).first()
-    if db_vehicle is None:
-        raise HTTPException(status_code=404, detail="Vehicle not found")
-    return db_vehicle
-
-# UPDATE: Full update (for correcting mistakes in VIN, Year, etc.)
-@app.put("/vehicles/{vehicle_id}", response_model=schemas.VehicleResponse)
-def update_vehicle(vehicle_id: int, vehicle_update: schemas.VehicleCreate, db: Session = Depends(get_db)):
-    db_vehicle = db.query(models.Vehicle).filter(models.Vehicle.id == vehicle_id).first()
-    if not db_vehicle:
-        raise HTTPException(status_code=404, detail="Vehicle not found")
-    
-    # Update fields dynamically
-    for key, value in vehicle_update.model_dump().items():
-        setattr(db_vehicle, key, value)
-    
-    db.commit()
-    db.refresh(db_vehicle)
-    return db_vehicle
-
-# DELETE: Remove a vehicle record
-@app.delete("/vehicles/{vehicle_id}")
-def delete_vehicle(vehicle_id: int, db: Session = Depends(get_db)):
-    db_vehicle = db.query(models.Vehicle).filter(models.Vehicle.id == vehicle_id).first()
-    if not db_vehicle:
-        raise HTTPException(status_code=404, detail="Vehicle not found")
-    
-    db.delete(db_vehicle)
-    db.commit()
-    return {"message": f"Vehicle with ID {vehicle_id} successfully deleted"}
-
-# UPDATE: Change status (In Transit -> Clearing -> Done)
-@app.patch("/vehicles/{vehicle_id}/status", response_model=schemas.VehicleResponse)
-def update_vehicle_status(vehicle_id: int, status: str, db: Session = Depends(get_db)):
-    db_vehicle = db.query(models.Vehicle).filter(models.Vehicle.id == vehicle_id).first()
-    if not db_vehicle:
-        raise HTTPException(status_code=404, detail="Vehicle not found")
-    
-    db_vehicle.status = status
-    db.commit()
-    db.refresh(db_vehicle)
-    return db_vehicle
+# Include API routers
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(vehicles.router, prefix="/api/vehicles", tags=["Vehicles"])
+app.include_router(financials.router, prefix="/api/financials", tags=["Financials"])
+app.include_router(documents.router, prefix="/api/documents", tags=["Documents"])
+app.include_router(estimate.router, prefix="/api/estimate", tags=["Estimator"])
