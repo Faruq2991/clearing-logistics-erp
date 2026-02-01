@@ -5,31 +5,33 @@ from .models.user import User, UserRole
 from .core.auth_utils import get_password_hash
 from decouple import config
 
-# Create all tables in the database
-Base.metadata.create_all(bind=engine)
-
 def auto_create_admin():
-    db = SessionLocal()
-    admin_exists = db.query(User).filter(User.role == UserRole.ADMIN).first()
-    if not admin_exists:
-        default_email = config("ADMIN_EMAIL", default="admin@example.com")
-        default_password = config("ADMIN_PASSWORD", default="changeme")
-        
-        # Check if an admin with the default email already exists
-        if db.query(User).filter(User.email == default_email).first():
-            print(f"Admin user with email '{default_email}' already exists. Skipping auto-creation.")
-            db.close()
-            return
+    # Ensure tables are created for this specific context before querying
+    Base.metadata.create_all(bind=engine)
 
-        admin = User(
-            email=default_email,
-            hashed_password=get_password_hash(default_password),
-            role=UserRole.ADMIN
-        )
-        db.add(admin)
-        db.commit()
-        print(f"✅ Default admin created: {default_email}")
-    db.close()
+    db = SessionLocal()
+    try:
+        admin_exists = db.query(User).filter(User.role == UserRole.ADMIN).first()
+        if not admin_exists:
+            default_email = config("ADMIN_EMAIL", default="admin@example.com")
+            default_password = config("ADMIN_PASSWORD", default="changeme")
+            
+            # Check if an admin with the default email already exists
+            # This check is now performed AFTER tables are guaranteed to exist for this session
+            if db.query(User).filter(User.email == default_email).first():
+                print(f"Admin user with email '{default_email}' already exists. Skipping auto-creation.")
+                return
+
+            admin = User(
+                email=default_email,
+                hashed_password=get_password_hash(default_password),
+                role=UserRole.ADMIN
+            )
+            db.add(admin)
+            db.commit()
+            print(f"✅ Default admin created: {default_email}")
+    finally:
+        db.close()
 
 # Run before app starts
 auto_create_admin()
