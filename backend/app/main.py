@@ -1,5 +1,5 @@
-import time
 from fastapi import FastAPI
+from sqlalchemy import inspect # New import
 from .database import engine, Base, SessionLocal
 from .api.endpoints import vehicles, financials, documents, estimate, auth, users
 from .models.user import User, UserRole
@@ -7,16 +7,27 @@ from .core.auth_utils import get_password_hash
 from decouple import config
 
 def auto_create_admin():
-    Base.metadata.create_all(bind=engine)
-    time.sleep(1) # Add a small delay for SQLite to settle
+    # Ensure tables are created if they don't exist
+    # This makes the auto-seed robust for first-time runs and uvicorn --reload
+    inspector = inspect(engine)
+    if not inspector.has_table("users"): # Check for existence of a key table
+        Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()
     try:
-        admin_exists = db.query(User).filter(User.role == UserRole.ADMIN).first()
-        if not admin_exists:
-            default_email = config("ADMIN_EMAIL", default="admin@gmail.com")
-            default_password = config("ADMIN_PASSWORD", default="admin123")
+        default_email = config("ADMIN_EMAIL", default="admin@example.com")
+        default_password = config("ADMIN_PASSWORD", default="changeme")
 
+        # Check if an admin with the default email already exists
+        # This query will now be run on a session that should see the created tables
+        existing_admin_by_email = db.query(User).filter(User.email == default_email).first()
+        if existing_admin_by_email:
+            print(f"✅ Admin user with email '{default_email}' already exists. Skipping auto-creation.")
+            return
+
+        # Check if any admin user exists by role if no default email admin was found
+        admin_exists_by_role = db.query(User).filter(User.role == UserRole.ADMIN).first()
+        if not admin_exists_by_role:
             admin = User(
                 email=default_email,
                 hashed_password=get_password_hash(default_password),
@@ -26,9 +37,13 @@ def auto_create_admin():
             db.commit()
             print(f"✅ Default admin created: {default_email}")
         else:
-            print("✅ Admin already exists. Skipping auto-creation.")
+            print("✅ Admin user with 'ADMIN' role already exists. Skipping auto-creation.")
+    except Exception as e:
+        print(f"Error during auto-admin creation: {e}")
+        print("Please ensure your database is accessible and migrations are up-to-date.")
     finally:
         db.close()
+
 # Run before app starts
 auto_create_admin()
 
