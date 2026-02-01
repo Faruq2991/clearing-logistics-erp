@@ -4,8 +4,9 @@ from typing import List
 
 from app.database import get_db
 from app.models.user import User, UserRole
-from app.schemas.user import UserResponse
+from app.schemas.user import UserResponse, UserCreate
 from app.core.security import check_admin_privilege
+from app.core import auth_utils
 
 router = APIRouter()
 
@@ -41,3 +42,17 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.delete(db_user)
     db.commit()
     return {"message": f"User with ID {user_id} successfully deleted"}
+
+@router.post("/", response_model=UserResponse, dependencies=[Depends(check_admin_privilege)])
+def create_user_with_role(user_data: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user_data.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    hashed_password = auth_utils.get_password_hash(user_data.password)
+    
+    new_user = User(email=user_data.email, hashed_password=hashed_password, role=user_data.role)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
