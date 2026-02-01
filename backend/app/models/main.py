@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
-from .base import Base
+from app.database import Base
 from .user import User
 
 class Vehicle(Base):
