@@ -1,1 +1,3 @@
-from .main import Base, Vehicle, Financials
+from .base import Base
+from .user import User
+from .main import Vehicle, Financials
