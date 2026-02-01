@@ -1,3 +1,4 @@
+import time
 from fastapi import FastAPI
 from .database import engine, Base, SessionLocal
 from .api.endpoints import vehicles, financials, documents, estimate, auth, users
@@ -6,21 +7,15 @@ from .core.auth_utils import get_password_hash
 from decouple import config
 
 def auto_create_admin():
-    # Ensure tables are created for this specific context before querying
     Base.metadata.create_all(bind=engine)
+    time.sleep(1) # Add a small delay for SQLite to settle
 
     db = SessionLocal()
     try:
         admin_exists = db.query(User).filter(User.role == UserRole.ADMIN).first()
         if not admin_exists:
-            default_email = config("ADMIN_EMAIL", default="admin@example.com")
-            default_password = config("ADMIN_PASSWORD", default="changeme")
-            
-            # Check if an admin with the default email already exists
-            # This check is now performed AFTER tables are guaranteed to exist for this session
-            if db.query(User).filter(User.email == default_email).first():
-                print(f"Admin user with email '{default_email}' already exists. Skipping auto-creation.")
-                return
+            default_email = config("ADMIN_EMAIL", default="admin@gmail.com")
+            default_password = config("ADMIN_PASSWORD", default="admin123")
 
             admin = User(
                 email=default_email,
@@ -30,9 +25,10 @@ def auto_create_admin():
             db.add(admin)
             db.commit()
             print(f"✅ Default admin created: {default_email}")
+        else:
+            print("✅ Admin already exists. Skipping auto-creation.")
     finally:
         db.close()
-
 # Run before app starts
 auto_create_admin()
 
