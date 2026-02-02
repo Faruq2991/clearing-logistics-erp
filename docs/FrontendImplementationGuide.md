@@ -422,13 +422,77 @@ function App() {
 
 ---
 
-## 9. Notes
+## 9. Completed Project Structure
+
+After implementing Phases 1–2, the frontend directory structure looks like this:
+
+```
+frontend/
+├── public/
+├── src/
+│   ├── components/
+│   │   ├── layout/
+│   │   │   └── Layout.tsx          # AppBar, nav links, Outlet
+│   │   └── ProtectedRoute.tsx
+│   ├── contexts/
+│   │   └── AuthContext.tsx
+│   ├── hooks/
+│   │   ├── useEstimate.ts
+│   │   └── useVehicles.ts
+│   ├── pages/
+│   │   ├── LoginPage.tsx
+│   │   ├── DashboardPage.tsx
+│   │   ├── VehiclesPage.tsx
+│   │   ├── VehicleDetailPage.tsx
+│   │   └── AddVehiclePage.tsx
+│   ├── services/
+│   │   └── api.ts
+│   ├── types/
+│   │   └── index.ts
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── index.css
+├── .env.local
+└── package.json
+```
+
+### How the Completed Project Works
+
+1. **Routing:** `/login` (public) → `/` (dashboard), `/vehicles`, `/vehicles/new`, `/vehicles/:id` (protected).
+2. **Auth:** Login stores JWT in localStorage; ProtectedRoute redirects unauthenticated users to `/login`.
+3. **Layout:** Layout wraps protected pages with AppBar (Dashboard, Vehicles links, Logout).
+4. **Pages:** LoginPage, DashboardPage (quick actions), VehiclesPage (table + pagination), VehicleDetailPage (tabs: Details, Documents, Financials), AddVehiclePage (form).
+5. **Hooks:** `useVehicles`, `useVehicle`, `useCreateVehicle`, `useEstimate` (TanStack Query).
+6. **Types:** VehicleCreate, VehicleResponse, FinancialsCreate, PaymentCreate, etc. (aligned with backend schemas).
+
+### Suggested Next Steps (Phases 3–7)
+
+- **Phase 3:** Add Estimator sidebar to AddVehiclePage (debounced `useEstimate`).
+- **Phase 4:** Vehicle edit, delete, status update modals/forms.
+- **Phase 5:** Document upload form and list in VehicleDetailPage Documents tab.
+- **Phase 6:** Financials section (display, create, record payment) in VehicleDetailPage.
+- **Phase 7:** Global search bar, filters, polish.
+
+---
+
+## 10. Notes
 
 - **CORS:** Ensure backend allows frontend origin (e.g. `http://localhost:5173` for Vite).
 - **Auth:** Backend uses OAuth2PasswordBearer; token in `Authorization: Bearer <token>`.
 - **Roles:** ADMIN, STAFF, GUEST; GUEST sees only their vehicles.
 - **Document types:** `bol`, `title`, `customs_assessment`, `duty_receipt`, `delivery_order`.
 - **Status workflow:** Backlog → In Transit → Clearing → Done.
+
+---
+
+## 11. Common Errors & Fixes
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `'ReactNode' must be imported using type-only import` | verbatimModuleSyntax | Use `import type { ReactNode } from 'react'` |
+| CORS / Network blocked | Backend missing CORS | Add CORSMiddleware to FastAPI (origins: localhost:5173) |
+| 401 on protected routes | Missing/invalid token | Ensure token in `Authorization: Bearer <token>` header |
+| API base URL wrong | .env not loaded | Check `VITE_API_URL` in `.env.local`; Vite requires `VITE_` prefix |
 
 ---
 

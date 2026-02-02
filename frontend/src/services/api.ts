@@ -1,0 +1,85 @@
+import axios from 'axios';
+import type {
+  VehicleCreate,
+  FinancialsCreate,
+  FinancialsUpdate,
+  PaymentCreate,
+} from '../types';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
+const api = axios.create({
+  baseURL: API_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+// Attach JWT to requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// Handle 401 - redirect to login
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('access_token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  }
+);
+
+// Auth
+export const authApi = {
+  login: (email: string, password: string) =>
+    api.post('/auth/login', new URLSearchParams({ username: email, password }), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    }),
+  register: (email: string, password: string) =>
+    api.post('/auth/register', { email, password }),
+};
+
+// Vehicles
+export const vehiclesApi = {
+  list: (params?: { skip?: number; limit?: number }) =>
+    api.get('/vehicles/', { params }),
+  get: (id: number) => api.get(`/vehicles/${id}`),
+  create: (data: VehicleCreate) => api.post('/vehicles/', data),
+  update: (id: number, data: VehicleCreate) => api.put(`/vehicles/${id}`, data),
+  delete: (id: number) => api.delete(`/vehicles/${id}`),
+  updateStatus: (id: number, status: string) =>
+    api.patch(`/vehicles/${id}/status`, null, { params: { status } }),
+};
+
+// Documents (vehicle-scoped)
+export const documentsApi = {
+  list: (vehicleId: number) => api.get(`/vehicles/${vehicleId}/documents/`),
+  upload: (vehicleId: number, formData: FormData) =>
+    api.post(`/vehicles/${vehicleId}/documents/`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  preview: (documentId: number) =>
+    `${API_URL.replace('/api', '')}/api/documents/${documentId}/preview`,
+};
+
+// Financials (vehicle-scoped)
+export const financialsApi = {
+  get: (vehicleId: number) => api.get(`/vehicles/${vehicleId}/financials/`),
+  create: (vehicleId: number, data: FinancialsCreate) =>
+    api.post(`/vehicles/${vehicleId}/financials/`, data),
+  update: (vehicleId: number, data: FinancialsUpdate) =>
+    api.patch(`/vehicles/${vehicleId}/financials/`, data),
+  listPayments: (vehicleId: number) =>
+    api.get(`/vehicles/${vehicleId}/financials/payments`),
+  recordPayment: (vehicleId: number, data: PaymentCreate) =>
+    api.post(`/vehicles/${vehicleId}/financials/payments`, data),
+};
+
+// Estimate
+export const estimateApi = {
+  search: (make: string, model: string, year: number) =>
+    api.get('/estimate/global-search', { params: { make, model, year } }),
+};

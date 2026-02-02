@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from sqlalchemy import inspect # New import
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect
 from .database import engine, Base, SessionLocal
 from .api.endpoints import vehicles, financials, documents, estimate, auth, users
 from .models.user import User, UserRole
@@ -51,6 +52,14 @@ app = FastAPI(
     title="Clearing & Logistics ERP",
     description="API for managing vehicle clearing, financials, and document storage.",
     version="0.1.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/")
