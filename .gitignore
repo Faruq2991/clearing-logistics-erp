@@ -145,3 +145,12 @@ venv.bak/
 .DS_Store
 Thumbs.db
 
+# Frontend build artifacts
+frontend/dist/
+
+# Frontend dependencies
+frontend/node_modules/
+
+# Project documentation
+usercreate.md
+
