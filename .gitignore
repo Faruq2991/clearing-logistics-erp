@@ -77,6 +77,12 @@ htmlcov/
 *.mo
 *.pot
 
+# Local document uploads (dev fallback when Cloudinary not configured)
+backend/uploads/
+
+# SQLite databases
+*.db
+
 # Django stuff:
 *.log
 local_settings.py
@@ -138,3 +144,4 @@ venv.bak/
 .hgignore
 .DS_Store
 Thumbs.db
+

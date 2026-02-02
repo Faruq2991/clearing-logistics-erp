@@ -2,12 +2,27 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.main import Vehicle
+from app.api.endpoints import documents as documents_endpoints
+from app.api.endpoints import financials as financials_endpoints
 from app.schemas.main import VehicleCreate, VehicleResponse
 from app.database import get_db
 from app.core.security import get_current_user, check_admin_privilege, check_staff_privilege
 from app.models.user import User, UserRole
 
 router = APIRouter()
+
+# Include vehicle-scoped document endpoints: GET/POST /api/vehicles/{vehicle_id}/documents
+router.include_router(
+    documents_endpoints.vehicle_documents_router,
+    prefix="/{vehicle_id}/documents",
+    tags=["Vehicle Documents"],
+)
+# Include vehicle-scoped financial endpoints: GET/POST/PATCH /api/vehicles/{vehicle_id}/financials
+router.include_router(
+    financials_endpoints.vehicle_financials_router,
+    prefix="/{vehicle_id}/financials",
+    tags=["Vehicle Financials"],
+)
 
 @router.post("/", response_model=VehicleResponse)
 def create_vehicle(vehicle: VehicleCreate, db: Session = Depends(get_db), current_user: User = Depends(check_staff_privilege)):

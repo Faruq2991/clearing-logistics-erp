@@ -9,10 +9,13 @@ This is the backend for the Clearing Logistics ERP application. It is built with
     pip install -r requirements.txt
     ```
 
-2.  Create a `.env` file in the `backend` directory and add the following line:
+2.  Create a `.env` file in the `backend` directory with:
     ```
-    DATABASE_URL="sqlite:///./sql_app.db"
+    DATABASE_URL="sqlite:///./clearing_erp.db"
+    SECRET_KEY="your-secret-key-for-jwt"
+    CUSTOMS_EXCHANGE_RATE=1600.00
     ```
+    Optional: `CLOUDINARY_URL` for document storage; `UPLOAD_DIR` for local upload path.
 
 ## Running the application
 

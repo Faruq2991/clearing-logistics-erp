@@ -14,13 +14,12 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from app.models.base import Base
+from app.database import Base, SQLALCHEMY_DATABASE_URL
+from app.models import main, user  # Import models so they register with Base
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+# Use app's DATABASE_URL for consistency with running application
+config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL)
 
 
 def run_migrations_offline() -> None:
