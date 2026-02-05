@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -7,10 +7,57 @@ import {
   Tabs,
   Tab,
   CircularProgress,
-  Alert,
+  Grid,
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
+  Chip,
 } from '@mui/material';
 import { useState } from 'react';
 import { useVehicle } from '../hooks/useVehicles';
+import {
+  ArrowBack as ArrowBackIcon,
+  Description as DescriptionIcon,
+  AttachMoney as AttachMoneyIcon,
+  Info as InfoIcon,
+} from '@mui/icons-material';
+import ErrorAlert from '../components/ErrorAlert';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`vehicle-tabpanel-${index}`}
+      aria-labelledby={`vehicle-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
+const getStatusChipColor = (status: string) => {
+    switch (status) {
+      case 'IN_TRANSIT':
+        return 'info';
+      case 'CLEARING':
+        return 'warning';
+      case 'DONE':
+        return 'success';
+      default:
+        return 'default';
+    }
+  };
 
 export default function VehicleDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -21,8 +68,8 @@ export default function VehicleDetailPage() {
   if (!vehicleId || isNaN(vehicleId)) {
     return (
       <Box sx={{ p: 3 }}>
-        <Alert severity="error">Invalid vehicle ID</Alert>
-        <Button component={Link} to="/vehicles" sx={{ mt: 2 }}>
+        <ErrorAlert error="Invalid vehicle ID" />
+        <Button component={RouterLink} to="/vehicles" sx={{ mt: 2 }} startIcon={<ArrowBackIcon />}>
           Back to Vehicles
         </Button>
       </Box>
@@ -32,8 +79,8 @@ export default function VehicleDetailPage() {
   if (error) {
     return (
       <Box sx={{ p: 3 }}>
-        <Alert severity="error">{String(error)}</Alert>
-        <Button component={Link} to="/vehicles" sx={{ mt: 2 }}>
+        <ErrorAlert error={error} />
+        <Button component={RouterLink} to="/vehicles" sx={{ mt: 2 }} startIcon={<ArrowBackIcon />}>
           Back to Vehicles
         </Button>
       </Box>
@@ -51,41 +98,80 @@ export default function VehicleDetailPage() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">
-          {vehicle.make} {vehicle.model} ({vehicle.year})
-        </Typography>
-        <Button component={Link} to="/vehicles" variant="outlined">
-          Back to Vehicles
+        <Box>
+          <Typography variant="h4" gutterBottom>
+            {vehicle.make} {vehicle.model} ({vehicle.year})
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary">
+            VIN: {vehicle.vin}
+          </Typography>
+        </Box>
+        <Button component={RouterLink} to="/vehicles" variant="outlined" startIcon={<ArrowBackIcon />}>
+          Back to List
         </Button>
       </Box>
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-        <Tab label="Details" />
-        <Tab label="Documents" />
-        <Tab label="Financials" />
-      </Tabs>
+      <Paper>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} indicatorColor="primary" textColor="primary" centered>
+          <Tab icon={<InfoIcon />} label="Details" />
+          <Tab icon={<DescriptionIcon />} label="Documents" />
+          <Tab icon={<AttachMoneyIcon />} label="Financials" />
+        </Tabs>
+        <Divider />
 
-      {tab === 0 && (
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="body1"><strong>VIN:</strong> {vehicle.vin}</Typography>
-          <Typography variant="body1"><strong>Color:</strong> {vehicle.color ?? '—'}</Typography>
-          <Typography variant="body1"><strong>Ship:</strong> {vehicle.ship_name ?? '—'}</Typography>
-          <Typography variant="body1"><strong>Terminal:</strong> {vehicle.terminal ?? '—'}</Typography>
-          <Typography variant="body1"><strong>Status:</strong> {vehicle.status}</Typography>
-        </Paper>
-      )}
+        <TabPanel value={tab} index={0}>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Card>
+                <CardHeader title="Vehicle Information" />
+                <CardContent>
+                  <Typography><strong>Make:</strong> {vehicle.make}</Typography>
+                  <Typography><strong>Model:</strong> {vehicle.model}</Typography>
+                  <Typography><strong>Year:</strong> {vehicle.year}</Typography>
+                  <Typography><strong>Color:</strong> {vehicle.color ?? '—'}</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Card>
+                <CardHeader title="Shipping & Status" />
+                <CardContent>
+                  <Typography><strong>Ship:</strong> {vehicle.ship_name ?? '—'}</Typography>
+                  <Typography><strong>Terminal:</strong> {vehicle.terminal ?? '—'}</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                    <Typography><strong>Status:</strong></Typography>
+                    <Chip label={vehicle.status} color={getStatusChipColor(vehicle.status || 'UNKNOWN')} sx={{ ml: 1 }} />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </TabPanel>
 
-      {tab === 1 && (
-        <Paper sx={{ p: 3 }}>
-          <Typography color="text.secondary">Document upload and list placeholder.</Typography>
-        </Paper>
-      )}
+        <TabPanel value={tab} index={1}>
+          <Card>
+            <CardHeader title="Vehicle Documents" />
+            <CardContent>
+              <Typography color="text.secondary">
+                Document management features are under development.
+              </Typography>
+              {/* Placeholder for document list and upload */}
+            </CardContent>
+          </Card>
+        </TabPanel>
 
-      {tab === 2 && (
-        <Paper sx={{ p: 3 }}>
-          <Typography color="text.secondary">Financials and payments placeholder.</Typography>
-        </Paper>
-      )}
+        <TabPanel value={tab} index={2}>
+          <Card>
+            <CardHeader title="Financial Summary" />
+            <CardContent>
+              <Typography color="text.secondary">
+                Financial details and payment tracking are under development.
+              </Typography>
+               {/* Placeholder for financial info */}
+            </CardContent>
+          </Card>
+        </TabPanel>
+      </Paper>
     </Box>
   );
 }

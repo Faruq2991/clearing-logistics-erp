@@ -2,6 +2,12 @@
  * Frontend types aligned with backend schemas.
  */
 
+export interface UserRegister {
+  email: string;
+  password: string;
+  role?: string; // Assuming role is optional for registration
+}
+
 export interface VehicleCreate {
   vin: string;
   make: string;

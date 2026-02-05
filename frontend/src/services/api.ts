@@ -4,6 +4,7 @@ import type {
   FinancialsCreate,
   FinancialsUpdate,
   PaymentCreate,
+  UserRegister, // Import UserRegister
 } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
@@ -38,8 +39,8 @@ export const authApi = {
     api.post('/auth/login', new URLSearchParams({ username: email, password }), {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     }),
-  register: (email: string, password: string) =>
-    api.post('/auth/register', { email, password }),
+  register: (data: UserRegister) => // Modified to accept UserRegister object
+    api.post('/auth/register', data),
 };
 
 // Vehicles

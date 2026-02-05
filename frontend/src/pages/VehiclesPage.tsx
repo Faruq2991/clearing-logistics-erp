@@ -1,101 +1,110 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  Box,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-  CircularProgress,
-  Alert,
-} from '@mui/material';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Box, Button, Typography, Chip } from '@mui/material';
+import { DataGrid, type GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
+import { Add as AddIcon, Visibility as ViewIcon } from '@mui/icons-material';
 import { useVehicles } from '../hooks/useVehicles';
 import type { VehicleResponse } from '../types';
+import ErrorAlert from '../components/ErrorAlert';
+
+const getStatusChipColor = (status: string) => {
+  switch (status) {
+    case 'IN_TRANSIT':
+      return 'info';
+    case 'CLEARING':
+      return 'warning';
+    case 'DONE':
+      return 'success';
+    default:
+      return 'default';
+  }
+};
+
+const columns: GridColDef[] = [
+  { field: 'vin', headerName: 'VIN', flex: 1.5 },
+  { field: 'make', headerName: 'Make', flex: 1 },
+  { field: 'model', headerName: 'Model', flex: 1 },
+  { field: 'year', headerName: 'Year', width: 100 },
+  {
+    field: 'status',
+    headerName: 'Status',
+    flex: 1,
+    renderCell: (params) => (
+      <Chip
+        label={params.value}
+        color={getStatusChipColor(params.value)}
+        size="small"
+      />
+    ),
+  },
+  {
+    field: 'actions',
+    type: 'actions',
+    headerName: 'Actions',
+    width: 100,
+    getActions: (params) => [
+      <RouterLink to={`/vehicles/${params.id}`} style={{ textDecoration: 'none' }}>
+        <GridActionsCellItem
+          icon={<ViewIcon />}
+          label="View"
+        />
+      </RouterLink>
+    ],
+  },
+];
 
 export default function VehiclesPage() {
-  const [skip, setSkip] = useState(0);
-  const limit = 20;
-  const { data, isLoading, error } = useVehicles(skip, limit);
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 10,
+  });
+  const { data, isLoading, error } = useVehicles(
+    paginationModel.page * paginationModel.pageSize,
+    paginationModel.pageSize
+  );
 
   const vehicles = (data as VehicleResponse[] | undefined) ?? [];
+  const navigate = useNavigate();
+
+  const handleRowClick = (params: { id: any; }) => {
+    navigate(`/vehicles/${params.id}`);
+  };
 
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">Vehicles</Typography>
-        <Button component={Link} to="/vehicles/new" variant="contained">
+        <Button
+          component={RouterLink}
+          to="/vehicles/new"
+          variant="contained"
+          startIcon={<AddIcon />}
+        >
           Add Vehicle
         </Button>
       </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {String(error)}
-        </Alert>
-      )}
+      <ErrorAlert error={error} />
 
-      {isLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>VIN</TableCell>
-                <TableCell>Make</TableCell>
-                <TableCell>Model</TableCell>
-                <TableCell>Year</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {vehicles.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    No vehicles found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                vehicles.map((v) => (
-                  <TableRow key={v.id}>
-                    <TableCell>{v.vin}</TableCell>
-                    <TableCell>{v.make}</TableCell>
-                    <TableCell>{v.model}</TableCell>
-                    <TableCell>{v.year}</TableCell>
-                    <TableCell>{v.status}</TableCell>
-                    <TableCell align="right">
-                      <Button component={Link} to={`/vehicles/${v.id}`} size="small">
-                        View
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-            <Button
-              disabled={skip === 0}
-              onClick={() => setSkip((s) => Math.max(0, s - limit))}
-            >
-              Previous
-            </Button>
-            <Button
-              disabled={vehicles.length < limit}
-              onClick={() => setSkip((s) => s + limit)}
-            >
-              Next
-            </Button>
-          </Box>
-        </>
-      )}
+      <Box sx={{ height: 600, width: '100%' }}>
+        <DataGrid
+          rows={vehicles}
+          columns={columns}
+          loading={isLoading}
+          pagination
+          paginationMode="server"
+          rowCount={-1} // Indicates server-side pagination with unknown total count
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          pageSizeOptions={[5, 10, 20]}
+          onRowClick={handleRowClick}
+          sx={{
+            '& .MuiDataGrid-cell:hover': {
+              cursor: 'pointer',
+            },
+          }}
+        />
+      </Box>
     </Box>
   );
 }
