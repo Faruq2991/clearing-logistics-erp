@@ -11,6 +11,7 @@ import DashboardPage from './pages/DashboardPage';
 import VehiclesPage from './pages/VehiclesPage';
 import VehicleDetailPage from './pages/VehicleDetailPage';
 import AddVehiclePage from './pages/AddVehiclePage';
+import CreateUserPage from './pages/CreateUserPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,6 +22,9 @@ const queryClient = new QueryClient({
 const theme = createTheme({
   palette: { mode: 'light' },
 });
+
+// Placeholder for UsersPage
+const UsersPage = () => <Navigate to="/" replace />;
 
 function App() {
   return (
@@ -44,6 +48,8 @@ function App() {
                 <Route path="vehicles" element={<VehiclesPage />} />
                 <Route path="vehicles/new" element={<AddVehiclePage />} />
                 <Route path="vehicles/:id" element={<VehicleDetailPage />} />
+                <Route path="users" element={<UsersPage />} />
+                <Route path="users/new" element={<CreateUserPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

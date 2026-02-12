@@ -26,9 +26,7 @@ def update_user_role(user_id: int, role: UserRole, db: Session = Depends(get_db)
     updated_user = user_service.update_user_role(db, user_id, role)
     return updated_user
 
-@router.delete("/{user_id}", dependencies=[Depends(check_admin_privilege)])
-def delete_user(user_id: int, db: Session = Depends(get_db)):
-    return user_service.delete_user(db, user_id)
+
 
 @router.post("/", response_model=UserResponse, dependencies=[Depends(check_admin_privilege)])
 def create_user_with_role(user_data: UserCreate, db: Session = Depends(get_db)):

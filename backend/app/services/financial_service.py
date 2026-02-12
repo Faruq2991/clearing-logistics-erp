@@ -19,8 +19,8 @@ def _get_vehicle_with_access(db: Session, vehicle_id: int, current_user: User) -
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
-    if current_user.role not in [UserRole.ADMIN, UserRole.STAFF] and vehicle.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to access this vehicle")
+    if current_user.role not in [UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Not authorized to access this vehicle's financials")
     return vehicle
 
 def _financials_with_balance(financials: Financials) -> FinancialsWithBalanceResponse:
@@ -131,6 +131,8 @@ def list_payments_for_vehicle(
 def list_all_financial_records(
     db: Session, current_user: User, skip: int = 0, limit: int = 100, vehicle_id: Optional[int] = None
 ) -> List[FinancialsWithBalanceResponse]:
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized to list all financial records")
     # Staff/Admin check is handled by endpoint, but _get_vehicle_with_access also contains it.
     # For now, we'll keep it simple and assume endpoint handles top-level auth.
     query = db.query(Financials)

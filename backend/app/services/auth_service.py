@@ -11,7 +11,7 @@ def authenticate_user(db: Session, email: str, password: str):
     return user
 
 def create_access_token_for_user(user: user_models.User) -> str:
-    return auth_utils.create_access_token(data={"sub": user.email})
+    return auth_utils.create_access_token(data={"sub": user.email, "role": user.role.value})
 
 def register_new_user(db: Session, user_data: user_schemas.UserCreate):
     db_user = db.query(user_models.User).filter(user_models.User.email == user_data.email).first()

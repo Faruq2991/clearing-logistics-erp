@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect
 from .database import engine, Base, SessionLocal
-from .api.endpoints import vehicles, financials, documents, estimate, auth, users, audit_logs
+from .api.endpoints import vehicles, financials, documents, estimate, auth, users, audit_logs, dashboard, activity
 from .models.user import User, UserRole
 from .core.auth_utils import get_password_hash
 from decouple import config
@@ -74,3 +74,5 @@ app.include_router(financials.router, prefix="/api/financials", tags=["Financial
 app.include_router(documents.router, prefix="/api/documents", tags=["Documents"])
 app.include_router(estimate.router, prefix="/api/estimate", tags=["Estimator"])
 app.include_router(audit_logs.router, prefix="/api/audit-logs", tags=["Audit Logs"])
+app.include_router(dashboard.router, prefix="/api", tags=["Dashboard"])
+app.include_router(activity.router, prefix="/api/activities", tags=["Activities"])

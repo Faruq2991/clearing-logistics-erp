@@ -2,10 +2,25 @@
  * Frontend types aligned with backend schemas.
  */
 
+export interface UserCreate {
+  email: string;
+  password: string;
+  role: 'admin' | 'staff' | 'guest';
+}
+
+export interface User {
+  id: number;
+  email: string;
+  role: 'admin' | 'staff' | 'guest';
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface UserRegister {
   email: string;
   password: string;
-  role?: string; // Assuming role is optional for registration
+  role?: string;
 }
 
 export interface VehicleCreate {
@@ -85,3 +100,25 @@ export type DocumentType =
   | 'customs_assessment'
   | 'duty_receipt'
   | 'delivery_order';
+
+export interface Activity {
+  id: number;
+  user_name: string | null;
+  action: string;
+  target_type: string | null;
+  target_name: string | null;
+  created_at: string;
+}
+
+export interface DashboardStats {
+    vehicles_in_progress: number;
+    total_cleared_vehicles: number;
+    pending_documents: number;
+    total_outstanding_debt: number;
+    vehicle_status_distribution: { [key: string]: number };
+    active_vessel_counts: { [key: string]: number };
+    vehicles_in_progress_trend: number;
+    total_cleared_vehicles_trend: number;
+    pending_documents_trend: number;
+    total_outstanding_debt_trend: number;
+}

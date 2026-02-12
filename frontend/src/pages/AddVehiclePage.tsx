@@ -9,32 +9,89 @@ import {
   Stepper,
   Step,
   StepLabel,
-  Grid, // Revert to standard Grid
   Divider,
   List,
   ListItem,
   ListItemText,
+  Autocomplete,
+  TextField,
+  MenuItem,
 } from '@mui/material';
-import { useFormContext, useForm } from 'react-hook-form';
+import Grid from '@mui/material/Grid';
+import { useForm, useFormContext, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { DatePicker } from '@mui/x-date-pickers';
 import { useCreateVehicle } from '../hooks/useVehicles';
 import type { VehicleCreate } from '../types';
 import ErrorAlert from '../components/ErrorAlert';
 import Form from '../components/form/Form';
 import InputField from '../components/form/InputField';
+import SelectField from '../components/form/SelectField';
+
+
+
+// VIN must be exactly 17 characters, alphanumeric (no I, O, Q)
+const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/;
 
 const vehicleSchema = z.object({
-  vin: z.string().min(1, 'VIN is required'),
+  vin: z.string()
+    .length(17, { message: "VIN must be exactly 17 characters" })
+    .regex(vinRegex, { message: "VIN must contain only letters (excluding I, O, Q) and numbers" }),
   make: z.string().min(1, 'Make is required'),
   model: z.string().min(1, 'Model is required'),
-  year: z.number().int().min(1900, 'Invalid year').max(new Date().getFullYear() + 1, 'Invalid year'),
+  year: z.coerce
+    .number()
+    .int()
+    .min(1900, 'Invalid year')
+    .max(new Date().getFullYear() + 1, 'Invalid year'),
   color: z.string().optional(),
   ship_name: z.string().optional(),
   terminal: z.string().optional(),
-  status: z.string().default('IN_TRANSIT'),
+  arrival_date: z.date().optional().nullable(),
+  status: z.string().min(1, 'Status is required'),
 });
 
+type VehicleFormInputs = z.infer<typeof vehicleSchema>;
+
 const steps = ['Vehicle Information', 'Shipping Details', 'Review'];
+
+// Vehicle makes with their models
+const VEHICLE_MAKES = {
+  'TOYOTA': ['Camry', 'Corolla', 'RAV4', 'Highlander', 'Tacoma', 'Tundra', 'Prius', 'Sienna', 'Land Cruiser', '4Runner'],
+  'HONDA': ['Accord', 'Civic', 'CR-V', 'Pilot', 'Odyssey', 'HR-V', 'Ridgeline', 'Passport'],
+  'FORD': ['F-150', 'Mustang', 'Explorer', 'Escape', 'Edge', 'Expedition', 'Ranger', 'Bronco'],
+  'CHEVROLET': ['Silverado', 'Equinox', 'Tahoe', 'Suburban', 'Traverse', 'Malibu', 'Colorado', 'Camaro'],
+  'NISSAN': ['Altima', 'Sentra', 'Rogue', 'Pathfinder', 'Frontier', 'Titan', 'Murano', 'Kicks'],
+  'MERCEDES-BENZ': ['C-Class', 'E-Class', 'S-Class', 'GLC', 'GLE', 'GLS', 'A-Class', 'CLA'],
+  'BMW': ['3 Series', '5 Series', '7 Series', 'X3', 'X5', 'X7', 'M3', 'M5'],
+  'AUDI': ['A4', 'A6', 'A8', 'Q3', 'Q5', 'Q7', 'Q8', 'e-tron'],
+  'LEXUS': ['ES', 'IS', 'LS', 'RX', 'GX', 'LX', 'NX', 'UX'],
+  'HYUNDAI': ['Elantra', 'Sonata', 'Tucson', 'Santa Fe', 'Palisade', 'Kona', 'Venue'],
+  'KIA': ['Forte', 'K5', 'Sportage', 'Sorento', 'Telluride', 'Soul', 'Seltos'],
+  'VOLKSWAGEN': ['Jetta', 'Passat', 'Tiguan', 'Atlas', 'Golf', 'ID.4', 'Arteon'],
+  'MAZDA': ['Mazda3', 'Mazda6', 'CX-5', 'CX-9', 'CX-30', 'CX-50', 'MX-5 Miata'],
+  'SUBARU': ['Outback', 'Forester', 'Crosstrek', 'Ascent', 'Legacy', 'WRX', 'BRZ'],
+  'JEEP': ['Wrangler', 'Grand Cherokee', 'Cherokee', 'Compass', 'Renegade', 'Gladiator'],
+};
+
+// Ship names (placeholders)
+const SHIP_NAMES = [
+  'SILVER RAY',
+  'OCEAN STAR',
+  'PACIFIC VOYAGER',
+  'ATLANTIC PRIDE',
+  'MERCURY DREAM',
+  'NEPTUNE CARRIER',
+  'POSEIDON EXPRESS',
+  'MARINE SPIRIT',
+];
+
+// Terminal options
+const TERMINALS = [
+  { value: 'five_star_tin_can', label: 'Five Star - Tin Can' },
+  { value: 'grimaldi', label: 'Grimaldi' },
+  { value: 'apapa', label: 'Apapa' },
+];
 
 function Review() {
   const { getValues } = useFormContext();
@@ -47,16 +104,22 @@ function Review() {
       </Typography>
       <List disablePadding>
         <ListItem>
-          <ListItemText primary="VIN" secondary={values.vin} />
+          <ListItemText 
+            primary="VIN" 
+            secondary={values.vin || 'Not provided'} 
+            slotProps={{ 
+              secondary: { sx: { fontFamily: 'monospace', fontSize: '0.95rem' } }
+            }}
+          />
         </ListItem>
         <ListItem>
-          <ListItemText primary="Make" secondary={values.make} />
+          <ListItemText primary="Make" secondary={values.make || 'Not provided'} />
         </ListItem>
         <ListItem>
-          <ListItemText primary="Model" secondary={values.model} />
+          <ListItemText primary="Model" secondary={values.model || 'Not provided'} />
         </ListItem>
         <ListItem>
-          <ListItemText primary="Year" secondary={values.year} />
+          <ListItemText primary="Year" secondary={values.year || 'Not provided'} />
         </ListItem>
         <ListItem>
           <ListItemText primary="Color" secondary={values.color || 'N/A'} />
@@ -71,10 +134,88 @@ function Review() {
           <ListItemText primary="Ship Name" secondary={values.ship_name || 'N/A'} />
         </ListItem>
         <ListItem>
-          <ListItemText primary="Terminal" secondary={values.terminal || 'N/A'} />
+          <ListItemText 
+            primary="Terminal" 
+            secondary={
+              values.terminal 
+                ? TERMINALS.find(t => t.value === values.terminal)?.label || values.terminal
+                : 'N/A'
+            } 
+          />
+        </ListItem>
+        <ListItem>
+          <ListItemText 
+            primary="Arrival Date" 
+            secondary={values.arrival_date ? new Date(values.arrival_date).toLocaleDateString() : 'N/A'} 
+          />
         </ListItem>
       </List>
     </Box>
+  );
+}
+
+function VehicleMakeField() {
+  const { control, setValue } = useFormContext<VehicleFormInputs>();
+  const makes = Object.keys(VEHICLE_MAKES).sort();
+
+  return (
+    <Controller
+      name="make"
+      control={control}
+      render={({ field, fieldState: { error } }) => (
+        <Autocomplete
+          {...field}
+          options={makes}
+          value={field.value || null}
+          onChange={(_, newValue) => {
+            field.onChange(newValue || '');
+            setValue('model', ''); // Reset model when make changes
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Make *"
+              error={!!error}
+              helperText={error?.message}
+            />
+          )}
+          freeSolo={false}
+        />
+      )}
+    />
+  );
+}
+
+function VehicleModelField() {
+  const { control, watch } = useFormContext<VehicleFormInputs>();
+  const selectedMake = watch('make');
+  const models = selectedMake && VEHICLE_MAKES[selectedMake as keyof typeof VEHICLE_MAKES] 
+    ? VEHICLE_MAKES[selectedMake as keyof typeof VEHICLE_MAKES].sort()
+    : [];
+
+  return (
+    <Controller
+      name="model"
+      control={control}
+      render={({ field, fieldState: { error } }) => (
+        <Autocomplete
+          {...field}
+          options={models}
+          value={field.value || null}
+          onChange={(_, newValue) => field.onChange(newValue || '')}
+          disabled={!selectedMake}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Model *"
+              error={!!error}
+              helperText={error?.message || (!selectedMake ? 'Select a make first' : '')}
+            />
+          )}
+          freeSolo={false}
+        />
+      )}
+    />
   );
 }
 
@@ -83,76 +224,107 @@ function getStepContent(step: number) {
     case 0:
       return (
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12 }} component="div">
-            <Box>
-              <InputField
-                name="vin"
-                label="VIN"
-                required
-              />
-            </Box>
+          <Grid size={{ xs: 12 }}>
+            <InputField
+              name="vin"
+              label="VIN"
+              required
+              inputProps={{
+                style: { textTransform: 'uppercase' },
+                maxLength: 17,
+              }}
+              helperText="17 characters, alphanumeric (excluding I, O, Q)"
+            />
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }} component="div">
-            <Box>
-              <InputField
-                name="make"
-                label="Make"
-                required
-              />
-            </Box>
+          
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <VehicleMakeField />
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }} component="div">
-            <Box>
-              <InputField
-                name="model"
-                label="Model"
-                required
-              />
-            </Box>
+          
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <VehicleModelField />
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }} component="div">
-            <Box>
-              <InputField
-                name="year"
-                label="Year"
-                type="number"
-                required
-              />
-            </Box>
+          
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <InputField
+              name="year"
+              label="Year"
+              type="number"
+              required
+            />
           </Grid>
-          <Grid size={{ xs: 12 }} component="div">
-            <Box>
-              <InputField
-                name="color"
-                label="Color"
-              />
-            </Box>
+          
+          <Grid size={{ xs: 12 }}>
+            <InputField
+              name="color"
+              label="Color"
+            />
           </Grid>
         </Grid>
       );
+      
     case 1:
       return (
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12 }} component="div">
-            <Box>
-              <InputField
-                name="ship_name"
-                label="Ship Name"
-              />
-            </Box>
+          <Grid size={{ xs: 12 }}>
+            <Controller
+              name="ship_name"
+              render={({ field }) => (
+                <Autocomplete
+                  {...field}
+                  options={SHIP_NAMES}
+                  value={field.value || null}
+                  onChange={(_, newValue) => field.onChange(newValue || '')}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Ship Name"
+                    />
+                  )}
+                  freeSolo
+                />
+              )}
+            />
           </Grid>
-          <Grid size={{ xs: 12 }} component="div">
-            <Box>
-              <InputField
-                name="terminal"
-                label="Terminal"
-              />
-            </Box>
+          
+          <Grid size={{ xs: 12 }}>
+            <SelectField
+              name="terminal"
+              label="Terminal"
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+              {TERMINALS.map((terminal) => (
+                <MenuItem key={terminal.value} value={terminal.value}>
+                  {terminal.label}
+                </MenuItem>
+              ))}
+            </SelectField>
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Controller
+              name="arrival_date"
+              render={({ field }) => (
+                <DatePicker
+                  label="Arrival Date"
+                  value={field.value || null}
+                  onChange={(date) => field.onChange(date)}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                    }
+                  }}
+                />
+              )}
+            />
           </Grid>
         </Grid>
       );
+      
     case 2:
       return <Review />;
+      
     default:
       return 'Unknown step';
   }
@@ -163,7 +335,7 @@ export default function AddVehiclePage() {
   const createVehicle = useCreateVehicle();
   const [activeStep, setActiveStep] = useState(0);
 
-  const methods = useForm<z.infer<typeof vehicleSchema>>({
+  const methods = useForm<VehicleFormInputs>({
     resolver: zodResolver(vehicleSchema),
     defaultValues: {
       vin: '',
@@ -173,16 +345,18 @@ export default function AddVehiclePage() {
       color: '',
       ship_name: '',
       terminal: '',
+      arrival_date: null,
       status: 'IN_TRANSIT',
     },
   });
 
-  const { trigger, handleSubmit } = methods;
+  const { trigger } = methods;
 
   const handleNext = async () => {
-    const fields: (keyof z.infer<typeof vehicleSchema>)[] = activeStep === 0 
-      ? ['vin', 'make', 'model', 'year'] 
-      : ['ship_name', 'terminal'];
+    const fields: (keyof VehicleFormInputs)[] =
+      activeStep === 0
+        ? ['vin', 'make', 'model', 'year']
+        : ['ship_name', 'terminal', 'arrival_date'];
     const isValid = await trigger(fields);
     if (isValid) {
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
@@ -193,7 +367,7 @@ export default function AddVehiclePage() {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
-  const onSubmit = async (data: z.infer<typeof vehicleSchema>) => {
+  const onSubmit = async (data: VehicleFormInputs) => {
     try {
       const res = await createVehicle.mutateAsync(data as VehicleCreate);
       navigate(`/vehicles/${res.data.id}`);
@@ -219,8 +393,8 @@ export default function AddVehiclePage() {
 
         <ErrorAlert error={createVehicle.error} />
 
-        <Form<z.infer<typeof vehicleSchema>>
-          onSubmit={handleSubmit(onSubmit)}
+        <Form<VehicleFormInputs>
+          onSubmit={onSubmit}
           schema={vehicleSchema}
           methods={methods}
         >
@@ -237,7 +411,11 @@ export default function AddVehiclePage() {
               Back
             </Button>
             {activeStep === steps.length - 1 ? (
-              <Button type="submit" variant="contained" disabled={createVehicle.isPending}>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={createVehicle.isPending}
+              >
                 {createVehicle.isPending ? 'Submitting...' : 'Submit Vehicle'}
               </Button>
             ) : (
@@ -245,7 +423,7 @@ export default function AddVehiclePage() {
                 Next
               </Button>
             )}
-             <Button component={RouterLink} to="/vehicles" sx={{ ml: 1 }}>
+            <Button component={RouterLink} to="/vehicles" sx={{ ml: 1 }}>
               Cancel
             </Button>
           </Box>
