@@ -32,8 +32,8 @@ def create_vehicle(vehicle: VehicleCreate, db: Session = Depends(get_db), curren
 
 # READ: The "List" part of the Happy Path
 @router.get("/", response_model=list[VehicleResponse])
-def get_vehicles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return vehicle_service.get_vehicles_list(db, current_user, skip, limit)
+def get_vehicles(skip: int = 0, limit: int = 100, search: str = None, status: str = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return vehicle_service.get_vehicles_list(db, current_user, skip, limit, search, status)
 
 
 @router.get("/{vehicle_id}", response_model=VehicleResponse)

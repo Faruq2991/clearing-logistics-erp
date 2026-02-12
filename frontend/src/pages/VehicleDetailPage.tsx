@@ -7,15 +7,19 @@ import {
   Tabs,
   Tab,
   CircularProgress,
-  Grid,
   Card,
   CardContent,
   CardHeader,
   Divider,
   Chip,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { useState } from 'react';
-import { useVehicle } from '../hooks/useVehicles';
+import { useVehicle, useUpdateVehicleStatus } from '../hooks/useVehicles';
 import {
   ArrowBack as ArrowBackIcon,
   Description as DescriptionIcon,
@@ -23,6 +27,7 @@ import {
   Info as InfoIcon,
 } from '@mui/icons-material';
 import ErrorAlert from '../components/ErrorAlert';
+import { useAuth } from '../contexts/AuthContext';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -64,6 +69,14 @@ export default function VehicleDetailPage() {
   const vehicleId = id ? parseInt(id, 10) : null;
   const { data: vehicle, isLoading, error } = useVehicle(vehicleId);
   const [tab, setTab] = useState(0);
+  const { user } = useAuth();
+  const { mutateAsync: updateStatus, isPending: isUpdatingStatus } = useUpdateVehicleStatus(vehicleId!);
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (vehicle && newStatus !== vehicle.status) {
+      await updateStatus(newStatus);
+    }
+  };
 
   if (!vehicleId || isNaN(vehicleId)) {
     return (
@@ -115,13 +128,13 @@ export default function VehicleDetailPage() {
         <Tabs value={tab} onChange={(_, v) => setTab(v)} indicatorColor="primary" textColor="primary" centered>
           <Tab icon={<InfoIcon />} label="Details" />
           <Tab icon={<DescriptionIcon />} label="Documents" />
-          <Tab icon={<AttachMoneyIcon />} label="Financials" />
+          {user?.role === 'admin' && <Tab icon={<AttachMoneyIcon />} label="Financials" />}
         </Tabs>
         <Divider />
 
         <TabPanel value={tab} index={0}>
           <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid item xs={12} md={6}>
               <Card>
                 <CardHeader title="Vehicle Information" />
                 <CardContent>
@@ -132,15 +145,33 @@ export default function VehicleDetailPage() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid item xs={12} md={6}>
               <Card>
                 <CardHeader title="Shipping & Status" />
                 <CardContent>
                   <Typography><strong>Ship:</strong> {vehicle.ship_name ?? '—'}</Typography>
                   <Typography><strong>Terminal:</strong> {vehicle.terminal ?? '—'}</Typography>
+                   <Typography>
+                    <strong>Arrival Date:</strong>{' '}
+                    {vehicle.arrival_date ? new Date(vehicle.arrival_date).toLocaleDateString() : '—'}
+                  </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                     <Typography><strong>Status:</strong></Typography>
-                    <Chip label={vehicle.status} color={getStatusChipColor(vehicle.status || 'UNKNOWN')} sx={{ ml: 1 }} />
+                    {user?.role && ['admin', 'staff'].includes(user.role) ? (
+                      <FormControl sx={{ ml: 1, minWidth: 120 }} size="small">
+                        <Select
+                          value={vehicle.status}
+                          onChange={(e) => handleStatusChange(e.target.value)}
+                          disabled={isUpdatingStatus}
+                        >
+                          <MenuItem value="IN_TRANSIT">In Transit</MenuItem>
+                          <MenuItem value="CLEARING">Clearing</MenuItem>
+                          <MenuItem value="DONE">Done</MenuItem>
+                        </Select>
+                      </FormControl>
+                    ) : (
+                      <Chip label={vehicle.status} color={getStatusChipColor(vehicle.status || 'UNKNOWN')} sx={{ ml: 1 }} />
+                    )}
                   </Box>
                 </CardContent>
               </Card>
@@ -160,17 +191,19 @@ export default function VehicleDetailPage() {
           </Card>
         </TabPanel>
 
-        <TabPanel value={tab} index={2}>
-          <Card>
-            <CardHeader title="Financial Summary" />
-            <CardContent>
-              <Typography color="text.secondary">
-                Financial details and payment tracking are under development.
-              </Typography>
-               {/* Placeholder for financial info */}
-            </CardContent>
-          </Card>
-        </TabPanel>
+        {user?.role === 'admin' && (
+          <TabPanel value={tab} index={2}>
+            <Card>
+              <CardHeader title="Financial Summary" />
+              <CardContent>
+                <Typography color="text.secondary">
+                  Financial details and payment tracking are under development.
+                </Typography>
+                 {/* Placeholder for financial info */}
+              </CardContent>
+            </Card>
+          </TabPanel>
+        )}
       </Paper>
     </Box>
   );

@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from typing import List
 from fastapi import HTTPException, status
 
@@ -17,11 +18,24 @@ def create_new_vehicle(db: Session, vehicle_data: VehicleCreate, current_user_id
     db.refresh(new_vehicle)
     return new_vehicle
 
-def get_vehicles_list(db: Session, current_user: User, skip: int = 0, limit: int = 100) -> List[Vehicle]:
-    if current_user.role in [UserRole.ADMIN, UserRole.STAFF]:
-        vehicles = db.query(Vehicle).offset(skip).limit(limit).all()
-    else:
-        vehicles = db.query(Vehicle).filter(Vehicle.owner_id == current_user.id).offset(skip).limit(limit).all()
+def get_vehicles_list(db: Session, current_user: User, skip: int = 0, limit: int = 100, search: str = None, status: str = None) -> List[Vehicle]:
+    query = db.query(Vehicle)
+
+    if current_user.role not in [UserRole.ADMIN, UserRole.STAFF]:
+        query = query.filter(Vehicle.owner_id == current_user.id)
+
+    if search:
+        query = query.filter(
+            or_(
+                Vehicle.vin.ilike(f"%{search}%"),
+                Vehicle.make.ilike(f"%{search}%")
+            )
+        )
+    
+    if status:
+        query = query.filter(Vehicle.status == status)
+
+    vehicles = query.offset(skip).limit(limit).all()
     return vehicles
 
 def get_vehicle_by_id(db: Session, vehicle_id: int, current_user: User) -> Vehicle:

@@ -4,12 +4,13 @@ import type {
   FinancialsCreate,
   FinancialsUpdate,
   PaymentCreate,
-  UserRegister, // Import UserRegister
+  UserRegister,
+  UserCreate, // Add this import
 } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -39,13 +40,13 @@ export const authApi = {
     api.post('/auth/login', new URLSearchParams({ username: email, password }), {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     }),
-  register: (data: UserRegister) => // Modified to accept UserRegister object
+  register: (data: UserRegister) =>
     api.post('/auth/register', data),
 };
 
 // Vehicles
 export const vehiclesApi = {
-  list: (params?: { skip?: number; limit?: number }) =>
+  list: (params?: { skip?: number; limit?: number; search?: string | null, status?: string | null }) =>
     api.get('/vehicles/', { params }),
   get: (id: number) => api.get(`/vehicles/${id}`),
   create: (data: VehicleCreate) => api.post('/vehicles/', data),
@@ -83,4 +84,32 @@ export const financialsApi = {
 export const estimateApi = {
   search: (make: string, model: string, year: number) =>
     api.get('/estimate/global-search', { params: { make, model, year } }),
+};
+
+// Users (admin only)
+export const usersApi = {
+  getAll: async () => {
+    const response = await api.get('/users');
+    return response.data;
+  },
+  
+  getById: async (id: string) => {
+    const response = await api.get(`/users/${id}`);
+    return response.data;
+  },
+  
+  create: async (data: UserCreate) => {
+    const response = await api.post('/users', data);
+    return response.data;
+  },
+  
+  update: async (id: string, data: Partial<UserCreate>) => {
+    const response = await api.put(`/users/${id}`, data);
+    return response.data;
+  },
+  
+  delete: async (id: string) => {
+    const response = await api.delete(`/users/${id}`);
+    return response.data;
+  },
 };

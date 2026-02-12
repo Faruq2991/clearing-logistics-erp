@@ -3,10 +3,10 @@ import { vehiclesApi } from '../services/api';
 import { getErrorMessage } from '../services/errorHandler';
 import type { VehicleCreate, VehicleResponse } from '../types';
 
-export function useVehicles(skip = 0, limit = 100) {
+export function useVehicles(skip = 0, limit = 100, search: string | null = null, status: string | null = null) {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['vehicles', skip, limit],
-    queryFn: () => vehiclesApi.list({ skip, limit }).then((r) => r.data),
+    queryKey: ['vehicles', skip, limit, search, status],
+    queryFn: () => vehiclesApi.list({ skip, limit, search, status }).then((r) => r.data),
   });
 
   return { data, isLoading, error: error ? getErrorMessage(error) : null };
@@ -37,4 +37,24 @@ export function useCreateVehicle() {
     isPending,
     error: error ? getErrorMessage(error) : null,
   };
+}
+
+export function useUpdateVehicleStatus(id: number) {
+    const qc = useQueryClient();
+    const { mutateAsync, isPending, error } = useMutation({
+        mutationFn: (status: string) => vehiclesApi.updateStatus(id, status),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['vehicle', id] });
+            qc.invalidateQueries({ queryKey: ['vehicles'] });
+        },
+        onError: (err) => {
+            console.error("Error updating vehicle status:", getErrorMessage(err));
+        },
+    });
+
+    return {
+        mutateAsync,
+        isPending,
+        error: error ? getErrorMessage(error) : null,
+    };
 }
