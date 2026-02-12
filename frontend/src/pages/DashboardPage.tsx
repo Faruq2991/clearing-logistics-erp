@@ -39,7 +39,7 @@ export default function DashboardPage() {
 
       {error && <ErrorAlert error={error} />}
 
-      <Grid container spacing={3}>
+      <Grid container spacing={1}>
         {summaryData.map((item) => (
           <Grid item xs={12} sm={6} md={3} key={item.title}>
             <Paper
@@ -84,7 +84,7 @@ export default function DashboardPage() {
           </Grid>
         ))}
 
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={5} sx={{ ml: { md: '4.166667%' } }}>
           {isLoading ? (
             <CircularProgress />
           ) : (
@@ -92,7 +92,7 @@ export default function DashboardPage() {
           )}
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={7}>
           {isLoading ? (
             <CircularProgress />
           ) : (

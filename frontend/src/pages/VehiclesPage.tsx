@@ -59,7 +59,7 @@ export default function VehiclesPage() {
     pageSize: 10,
   });
   const [searchTerm, setSearchTerm] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('ALL');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function VehiclesPage() {
 
   const handleClear = () => {
     setSearchTerm('');
-    setStatus('');
+    setStatus('ALL');
   };
 
   return (
@@ -125,9 +125,8 @@ export default function VehiclesPage() {
               label="Status"
               onChange={(e) => setStatus(e.target.value)}
             >
-              <MenuItem value="" sx={{ em: { width: '100%' } }}>
-                <em>All</em>
-              </MenuItem>
+              <MenuItem value="ALL"> All</MenuItem>
+              
               <MenuItem value="IN_TRANSIT">In Transit</MenuItem>
               <MenuItem value="CLEARING">Clearing</MenuItem>
               <MenuItem value="DONE">Done</MenuItem>
