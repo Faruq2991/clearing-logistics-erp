@@ -1,134 +1,135 @@
-from fastapi import HTTPException, UploadFile, File, Form, status
-from fastapi.responses import RedirectResponse, FileResponse
+import os
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from fastapi import UploadFile, HTTPException, status
+from fastapi.responses import FileResponse, RedirectResponse
+from typing import List
 
-from app.models.main import Vehicle, Document, DocumentType
+from app.models.main import Document, DocumentType, Vehicle
 from app.models.user import User, UserRole
-from app.schemas.document import DocumentResponse, DocumentUploadResponse
-from app.core.storage import (
-    get_storage_service,
-    ALLOWED_MIME_TYPES,
-    MAX_FILE_SIZE_BYTES,
-    LocalStorageService,
-)
+from app.schemas.document import DocumentUploadResponse
+from app.core.storage import storage_service
 
-def get_vehicle_with_access(db: Session, vehicle_id: int, current_user: User) -> Vehicle:
+# --- Access Control ---
+
+def get_vehicle_with_access(db: Session, vehicle_id: int, user: User) -> Vehicle:
+    """
+    Retrieves a vehicle if the user has permission to access it.
+    Raises HTTPException 403 if user is guest and not owner.
+    Raises HTTPException 404 if vehicle not found.
+    """
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
     if not vehicle:
-        raise HTTPException(status_code=404, detail="Vehicle not found")
-    if current_user.role not in [UserRole.ADMIN, UserRole.STAFF] and vehicle.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to access this vehicle")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+    
+    if user.role == UserRole.GUEST and vehicle.owner_id != user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this vehicle")
+        
     return vehicle
 
-def get_document_with_access(db: Session, document_id: int, current_user: User) -> Document:
-    doc = db.query(Document).filter(Document.id == document_id).first()
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
-    vehicle = db.query(Vehicle).filter(Vehicle.id == doc.vehicle_id).first()
-    if not vehicle: # This should ideally not happen if data integrity is maintained
-        raise HTTPException(status_code=404, detail="Associated vehicle not found")
-    if current_user.role not in [UserRole.ADMIN, UserRole.STAFF] and vehicle.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to access this document")
-    return doc
+def _get_document_with_access(db: Session, document_id: int, user: User) -> Document:
+    """Helper to get a document and verify user access via the vehicle."""
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+    
+    get_vehicle_with_access(db, document.vehicle_id, user) # Reuse vehicle access check
+    return document
+
+# --- Service Functions ---
 
 def list_documents_for_vehicle(db: Session, vehicle_id: int, include_history: bool = False) -> List[Document]:
+    """
+    List documents for a vehicle. If include_history is False, it returns only the
+    latest version of each document type.
+    """
     query = db.query(Document).filter(Document.vehicle_id == vehicle_id)
     if not include_history:
         query = query.filter(Document.replaced_by_id.is_(None))
-    documents = query.order_by(Document.document_type, Document.version.desc()).all()
-    return documents
+        
+    return query.order_by(Document.created_at.desc()).all()
 
 async def upload_document_for_vehicle(
-    db: Session,
-    vehicle_id: int,
-    document_type: DocumentType,
-    file: UploadFile,
-    uploaded_by_id: int
-) -> Document:
-    if not file.content_type or file.content_type not in ALLOWED_MIME_TYPES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid file type. Allowed: PDF, JPEG, PNG",
-        )
+    db: Session, vehicle_id: int, document_type: DocumentType, file: UploadFile, user_id: int
+) -> DocumentUploadResponse:
+    """Handles the business logic of uploading a document."""
+    file_url, original_filename, mime_type, file_size, unique_filename = await storage_service.save_file(file, vehicle_id)
+    
+    # Versioning: check if a document of the same type exists
+    existing_doc = db.query(Document).filter(
+        Document.vehicle_id == vehicle_id,
+        Document.document_type == document_type,
+        Document.replaced_by_id.is_(None)
+    ).first()
+    
+    new_version = 1
+    if existing_doc:
+        new_version = existing_doc.version + 1
 
-    content = await file.read() # Use await for async file read
-    if len(content) > MAX_FILE_SIZE_BYTES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File too large. Maximum size: {MAX_FILE_SIZE_BYTES // (1024*1024)}MB",
-        )
-
-    storage = get_storage_service()
-    result = storage.upload(content, file.filename or "document", file.content_type)
-
-    doc = Document(
+    db_document = Document(
         vehicle_id=vehicle_id,
-        document_type=document_type.value,
-        file_url=result["url"],
-        file_name=file.filename or "document",
-        mime_type=file.content_type,
-        file_size_bytes=len(content),
-        version=1,
-        uploaded_by_id=uploaded_by_id,
+        document_type=document_type,
+        file_url=file_url,
+        file_name=unique_filename, # Use unique filename for storage
+        mime_type=mime_type,
+        file_size_bytes=file_size,
+        uploaded_by_id=user_id,
+        version=new_version
     )
-    db.add(doc)
+    db.add(db_document)
     db.commit()
-    db.refresh(doc)
-    return doc
 
-def serve_local_document_file(db: Session, filename: str, current_user: User):
-    if ".." in filename or "/" in filename:
-        raise HTTPException(status_code=400, detail="Invalid filename")
+    if existing_doc:
+        existing_doc.replaced_by_id = db_document.id
+        db.commit()
 
-    storage = get_storage_service()
-    if not isinstance(storage, LocalStorageService):
-        raise HTTPException(status_code=404, detail="Not found (not using local storage)")
+    db.refresh(db_document)
+    return DocumentUploadResponse(message="File uploaded successfully", document=db_document)
 
-    file_path = storage.get_file_path(filename)
-    if not file_path.exists():
+def get_document_metadata(db: Session, document_id: int, user: User) -> Document:
+    """Get a document's metadata after checking access."""
+    return _get_document_with_access(db, document_id, user)
+
+def preview_document_content(db: Session, document_id: int, user: User):
+    """Returns a response to preview a document."""
+    document = _get_document_with_access(db, document_id, user)
+    return RedirectResponse(url=document.file_url)
+
+def download_document_content(db: Session, document_id: int, user: User):
+    """Returns a FileResponse to download a document."""
+    document = _get_document_with_access(db, document_id, user)
+    file_path = storage_service.get_file_path(document.file_name)
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found on server")
+
+    return FileResponse(path=file_path, filename=document.file_name, media_type=document.mime_type)
+
+def delete_document_record(db: Session, document_id: int, user: User):
+    """
+    Deletes a document record. This is a hard delete for now.
+    A soft delete would involve setting a flag or using the versioning system.
+    """
+    document = _get_document_with_access(db, document_id, user) # Auth check
+    
+    # For versioned deletes, you'd find the previous version and unset its 'replaced_by_id'
+    # For now, we do a hard delete.
+    db.delete(document)
+    db.commit()
+    return {"message": "Document deleted successfully"}
+
+def serve_local_document_file(db: Session, filename: str, user: User) -> FileResponse:
+    """Serves a local file after validating access."""
+    # This is tricky. The filename alone doesn't tell us the vehicle.
+    # We need to find the document by filename to check access.
+    document = db.query(Document).filter(Document.file_name == filename).first()
+    if not document:
         raise HTTPException(status_code=404, detail="File not found")
 
-    doc = db.query(Document).filter(Document.file_url == f"/api/documents/files/{filename}").first()
-    if doc:
-        vehicle = get_vehicle_with_access(db, doc.vehicle_id, current_user) # Re-use access check
-        # If get_vehicle_with_access doesn't raise, user has access
-    else:
-        # If no document record, deny access for security
-        raise HTTPException(status_code=403, detail="Access denied or document record not found")
+    # Now check if the user can access this document's vehicle
+    get_vehicle_with_access(db, document.vehicle_id, user)
 
-    return FileResponse(path=str(file_path), filename=filename)
+    file_path = storage_service.get_file_path(filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found on server")
 
-def get_document_metadata(db: Session, document_id: int, current_user: User) -> Document:
-    return get_document_with_access(db, document_id, current_user)
-
-def preview_document_content(db: Session, document_id: int, current_user: User):
-    doc = get_document_with_access(db, document_id, current_user)
-    if doc.file_url.startswith("http"):
-        return RedirectResponse(url=doc.file_url)
-    return RedirectResponse(url=doc.file_url) # For local storage, redirects to our internal file serving endpoint
-
-def download_document_content(db: Session, document_id: int, current_user: User):
-    doc = get_document_with_access(db, document_id, current_user)
-    if doc.file_url.startswith("http"):
-        return RedirectResponse(url=doc.file_url)
-
-    storage = get_storage_service()
-    if isinstance(storage, LocalStorageService):
-        filename_in_storage = doc.file_url.split("/")[-1] # Assuming URL format /api/documents/files/{filename}
-        file_path = storage.get_file_path(filename_in_storage)
-        if not file_path.exists():
-            raise HTTPException(status_code=404, detail="File not found in storage")
-        return FileResponse(
-            path=str(file_path),
-            filename=doc.file_name,
-            media_type=doc.mime_type,
-            headers={"Content-Disposition": f'attachment; filename="{doc.file_name}"'},
-        )
-    return RedirectResponse(url=doc.file_url) # Fallback if not local and not HTTP URL (shouldn't happen)
-
-def delete_document_record(db: Session, document_id: int, current_user: User):
-    doc = get_document_with_access(db, document_id, current_user) # Ensures user has rights
-    db.delete(doc)
-    db.commit()
-    return {"message": f"Document {document_id} deleted successfully"}
+    return FileResponse(file_path, media_type=document.mime_type)

@@ -32,7 +32,7 @@ def get_vehicles_list(db: Session, current_user: User, skip: int = 0, limit: int
             )
         )
     
-    if status:
+    if status and status != 'ALL':
         query = query.filter(Vehicle.status == status)
 
     vehicles = query.offset(skip).limit(limit).all()

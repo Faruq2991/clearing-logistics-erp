@@ -45,3 +45,27 @@ def get_clearing_cost_estimate(db: Session, make: str, model: str, year: int) ->
         "current_exchange_rate": current_rate,
         "exchange_rate_normalized": current_rate is not None,
     }
+
+
+def calculate_cost_of_running(costs: dict) -> Dict[str, float]:
+    """
+    Calculates the total cost of running a vehicle based on input costs
+    and fixed-price components.
+    """
+    # Fixed costs
+    cpc = 50000
+    valuation = 100000
+    approval_846 = 60000
+    comet = 65000
+
+    # Sum of user-provided costs
+    total_cost = costs.vehicle_cost + costs.shipping_fees + costs.customs_duty
+
+    # Add fixed costs
+    total_cost += cpc + valuation + approval_846 + comet
+
+    # Add terminal-specific surcharge
+    if costs.terminal.lower() == "ptml":
+        total_cost += 200000
+
+    return {"total_estimate": total_cost}

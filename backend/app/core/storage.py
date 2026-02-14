@@ -1,102 +1,43 @@
-"""
-Storage service for document uploads.
-Uses Cloudinary when CLOUDINARY_URL is set, otherwise falls back to local file storage.
-"""
 import os
-import uuid
-from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Optional
+import shutil
+from fastapi import UploadFile
+from typing import Tuple
 
-from decouple import config
+class LocalStorageService:
+    def __init__(self, upload_dir: str = "uploads", base_url: str = "/api/documents/files"):
+        self.upload_dir = upload_dir
+        self.base_url = base_url
+        os.makedirs(self.upload_dir, exist_ok=True)
 
+    def get_file_url(self, filename: str) -> str:
+        """Constructs the full URL for a given filename."""
+        return f"{self.base_url}/{filename}"
+        
+    def get_file_path(self, filename: str) -> str:
+        """Constructs the full file path for a given filename."""
+        return os.path.join(self.upload_dir, filename)
 
-# Allowed MIME types per PRD (PDF, JPEG, PNG for documents and photos)
-ALLOWED_MIME_TYPES = {
-    "application/pdf",
-    "image/jpeg",
-    "image/png",
-}
-
-# Max file size: 10MB (per PRD)
-MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
-
-
-class StorageService(ABC):
-    """Abstract storage interface for document uploads."""
-
-    @abstractmethod
-    def upload(self, file_content: bytes, file_name: str, mime_type: str) -> dict:
+    async def save_file(
+        self, file: UploadFile, vehicle_id: int
+    ) -> Tuple[str, str, str, int, str]:
         """
-        Upload file and return metadata.
-        Returns: {"url": str, "key": str (for retrieval)}
+        Saves an uploaded file locally and returns its details.
+        Returns: file_url, original_filename, mime_type, file_size, unique_filename
         """
-        pass
+        if not file.filename:
+            raise ValueError("File must have a filename.")
 
-    @abstractmethod
-    def get_url(self, key: str) -> str:
-        """Return URL for viewing/downloading the file."""
-        pass
+        unique_filename = f"{vehicle_id}_{os.path.basename(file.filename)}"
+        file_path = self.get_file_path(unique_filename)
 
+        file.file.seek(0)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        file_size = os.path.getsize(file_path)
+        file_url = self.get_file_url(unique_filename)
+        
+        return file_url, file.filename, file.content_type or 'application/octet-stream', file_size, unique_filename
 
-class LocalStorageService(StorageService):
-    """Local file storage for development when Cloudinary is not configured."""
-
-    def __init__(self, base_path: Optional[str] = None):
-        self.base_path = Path(base_path or "uploads")
-        self.base_path.mkdir(parents=True, exist_ok=True)
-
-    def upload(self, file_content: bytes, file_name: str, mime_type: str) -> dict:
-        ext = Path(file_name).suffix or ".bin"
-        unique_name = f"{uuid.uuid4().hex}{ext}"
-        file_path = self.base_path / unique_name
-        file_path.write_bytes(file_content)
-        # Return API path for clients; key is filename for serving
-        url = f"/api/documents/files/{unique_name}"
-        return {"url": url, "key": unique_name}
-
-    def get_url(self, key: str) -> str:
-        # For local storage, returns API path for the file
-        return f"/api/documents/files/{key}"
-
-    def get_file_path(self, key: str) -> Path:
-        """Return local filesystem path for serving the file."""
-        return self.base_path / key
-
-
-class CloudinaryStorageService(StorageService):
-    """Cloud-based storage using Cloudinary."""
-
-    def __init__(self):
-        import cloudinary
-        import cloudinary.uploader
-        self.uploader = cloudinary.uploader
-        # Configure from CLOUDINARY_URL env var
-        cloudinary.config()
-
-    def upload(self, file_content: bytes, file_name: str, mime_type: str) -> dict:
-        # Cloudinary upload supports file-like objects
-        import io
-        file_obj = io.BytesIO(file_content)
-        result = self.uploader.upload(
-            file_obj,
-            resource_type="auto",
-            public_id=f"documents/{uuid.uuid4().hex}",
-        )
-        url = result.get("secure_url", result.get("url", ""))
-        public_id = result.get("public_id", "")
-        return {"url": url, "key": public_id}
-
-    def get_url(self, key: str) -> str:
-        import cloudinary
-        url, _ = cloudinary.utils.cloudinary_url(key)
-        return url
-
-
-def get_storage_service() -> StorageService:
-    """Return the configured storage service."""
-    cloudinary_url = config("CLOUDINARY_URL", default=None)
-    if cloudinary_url:
-        return CloudinaryStorageService()
-    upload_dir = config("UPLOAD_DIR", default="uploads")
-    return LocalStorageService(base_path=upload_dir)
+# Create a singleton instance
+storage_service = LocalStorageService()

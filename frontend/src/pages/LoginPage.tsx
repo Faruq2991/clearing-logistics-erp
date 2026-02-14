@@ -68,7 +68,7 @@ export default function LoginPage() {
             elevation={3}
             sx={{ mt: 3, p: 3, width: '100%' }}
           >
-            <Form<LoginFormInputs> onSubmit={onSubmit} schema={schema}>
+            <Form<LoginFormInputs> onSubmit={onSubmit} schema={schema} defaultValues={{ email: '', password: '' }}>
               <ErrorAlert error={serverError} />
               <InputField
                 margin="normal"

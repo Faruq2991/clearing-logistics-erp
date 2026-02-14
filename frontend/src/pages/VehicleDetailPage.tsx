@@ -28,6 +28,7 @@ import {
 } from '@mui/icons-material';
 import ErrorAlert from '../components/ErrorAlert';
 import { useAuth } from '../contexts/AuthContext';
+import DocumentsTab from '../components/DocumentsTab';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -180,15 +181,7 @@ export default function VehicleDetailPage() {
         </TabPanel>
 
         <TabPanel value={tab} index={1}>
-          <Card>
-            <CardHeader title="Vehicle Documents" />
-            <CardContent>
-              <Typography color="text.secondary">
-                Document management features are under development.
-              </Typography>
-              {/* Placeholder for document list and upload */}
-            </CardContent>
-          </Card>
+          {vehicleId && <DocumentsTab vehicleId={vehicleId} />}
         </TabPanel>
 
         {user?.role === 'admin' && (

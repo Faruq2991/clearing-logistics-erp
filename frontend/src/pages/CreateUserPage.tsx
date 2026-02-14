@@ -71,17 +71,19 @@ export default function CreateUserPage() {
           schema={userSchema}
           methods={methods}
         >
-          <Grid size={{ xs: 12 }}>
-            <InputField name="email" label="Email" required />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <InputField name="password" label="Password" type="password" required />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <InputField name="role" label="Role" select required>
-              <MenuItem value="staff">Staff</MenuItem>
-              <MenuItem value="guest">Guest</MenuItem>
-            </InputField>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <InputField name="email" label="Email" required />
+            </Grid>
+            <Grid item xs={12}>
+              <InputField name="password" label="Password" type="password" required />
+            </Grid>
+            <Grid item xs={12}>
+              <InputField name="role" label="Role" select required>
+                <MenuItem value="staff">Staff</MenuItem>
+                <MenuItem value="guest">Guest</MenuItem>
+              </InputField>
+            </Grid>
           </Grid>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>

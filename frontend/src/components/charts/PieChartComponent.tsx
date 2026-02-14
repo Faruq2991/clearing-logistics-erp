@@ -22,7 +22,7 @@ const PieChartComponent: React.FC<PieChartComponentProps> = ({ title, data }) =>
         <Typography variant="h6" gutterBottom>
           {title}
         </Typography>
-        <Box sx={{ width: '100%', height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ width: '100%', height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>
           {data.length === 0 ? (
             <Box textAlign="center">
               <Typography variant="body1" color="text.secondary">

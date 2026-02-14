@@ -4,10 +4,9 @@ import { getErrorMessage } from '../services/errorHandler';
 import type { VehicleCreate, VehicleResponse } from '../types';
 
 export function useVehicles(skip = 0, limit = 100, search: string | null = null, status: string | null = null) {
-  const queryStatus = status === 'ALL' ? null : status;
   const { data, isLoading, error } = useQuery({
-    queryKey: ['vehicles', skip, limit, search, queryStatus],
-    queryFn: () => vehiclesApi.list({ skip, limit, search, status: queryStatus }).then((r) => r.data),
+    queryKey: ['vehicles', skip, limit, search, status],
+    queryFn: () => vehiclesApi.list({ skip, limit, search, status }).then((r) => r.data),
   });
 
   return { data, isLoading, error: error ? getErrorMessage(error) : null };

@@ -63,8 +63,11 @@ export const documentsApi = {
     api.post(`/vehicles/${vehicleId}/documents/`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
-  preview: (documentId: number) =>
-    `${API_URL.replace('/api', '')}/api/documents/${documentId}/preview`,
+  getPreviewUrl: (documentId: number) =>
+    `${API_URL}/documents/${documentId}/preview`,
+  download: (documentId: number) =>
+    api.get(`/documents/${documentId}/download`, { responseType: 'blob' }),
+  delete: (documentId: number) => api.delete(`/documents/${documentId}`),
 };
 
 // Financials (vehicle-scoped)
@@ -84,6 +87,12 @@ export const financialsApi = {
 export const estimateApi = {
   search: (make: string, model: string, year: number) =>
     api.get('/estimate/global-search', { params: { make, model, year } }),
+  calculateCostOfRunning: (data: {
+    vehicle_cost: number;
+    shipping_fees: number;
+    customs_duty: number;
+    terminal: string;
+  }) => api.post('/estimate/cost-of-running', data),
 };
 
 // Users (admin only)

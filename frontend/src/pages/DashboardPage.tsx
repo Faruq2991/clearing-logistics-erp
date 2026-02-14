@@ -11,6 +11,7 @@ import PieChartComponent from '../components/charts/PieChartComponent'; // Impor
 import BarChartComponent from '../components/charts/BarChartComponent'; // Import BarChartComponent
 import TrendIndicator from '../components/TrendIndicator'; // Import TrendIndicator
 import RecentActivity from '../components/RecentActivity'; // Import RecentActivity
+import { CostOfRunningCalculator } from '../components/form/CostOfRunningCalculator'; // Import CostOfRunningCalculator
 
 export default function DashboardPage() {
   const { data, isLoading, error } = useDashboardStats();
@@ -107,6 +108,10 @@ export default function DashboardPage() {
 
         <Grid item xs={12}>
           <RecentActivity />
+        </Grid>
+
+        <Grid item xs={12}>
+          <CostOfRunningCalculator />
         </Grid>
 
         <Grid item xs={12}>

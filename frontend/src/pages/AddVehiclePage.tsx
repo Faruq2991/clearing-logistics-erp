@@ -224,7 +224,7 @@ function getStepContent(step: number) {
     case 0:
       return (
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12 }}>
+          <Grid item xs={12}>
             <InputField
               name="vin"
               label="VIN"
@@ -237,15 +237,15 @@ function getStepContent(step: number) {
             />
           </Grid>
           
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid item xs={12} sm={4}>
             <VehicleMakeField />
           </Grid>
           
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid item xs={12} sm={4}>
             <VehicleModelField />
           </Grid>
           
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid item xs={12} sm={4}>
             <InputField
               name="year"
               label="Year"
@@ -254,7 +254,7 @@ function getStepContent(step: number) {
             />
           </Grid>
           
-          <Grid size={{ xs: 12 }}>
+          <Grid item xs={12}>
             <InputField
               name="color"
               label="Color"
@@ -266,7 +266,7 @@ function getStepContent(step: number) {
     case 1:
       return (
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12 }}>
+          <Grid item xs={12}>
             <Controller
               name="ship_name"
               render={({ field }) => (
@@ -287,7 +287,7 @@ function getStepContent(step: number) {
             />
           </Grid>
           
-          <Grid size={{ xs: 12 }}>
+          <Grid item xs={12}>
             <SelectField
               name="terminal"
               label="Terminal"
@@ -302,7 +302,7 @@ function getStepContent(step: number) {
               ))}
             </SelectField>
           </Grid>
-          <Grid size={{ xs: 12 }}>
+          <Grid item xs={12}>
             <Controller
               name="arrival_date"
               render={({ field }) => (

@@ -1,3 +1,4 @@
+from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect
@@ -6,6 +7,10 @@ from .api.endpoints import vehicles, financials, documents, estimate, auth, user
 from .models.user import User, UserRole
 from .core.auth_utils import get_password_hash
 from decouple import config
+
+# Ensure the upload directory exists
+import os
+os.makedirs("uploads", exist_ok=True)
 
 def auto_create_admin():
     # Ensure tables are created if they don't exist
@@ -53,6 +58,9 @@ app = FastAPI(
     description="API for managing vehicle clearing, financials, and document storage.",
     version="0.1.0"
 )
+
+# Serve static files for document previews
+app.mount("/api/documents/files", StaticFiles(directory="uploads"), name="document_files")
 
 app.add_middleware(
     CORSMiddleware,
