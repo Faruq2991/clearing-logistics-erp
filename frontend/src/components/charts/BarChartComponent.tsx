@@ -40,7 +40,7 @@ const BarChartComponent: React.FC<BarChartComponentProps> = ({ title, data, xLab
                   top: 5,
                   right: 30,
                   left: 20,
-                  bottom: 5,
+                  bottom: 30, // Increased bottom margin
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />

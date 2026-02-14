@@ -39,6 +39,22 @@ export default function InputField({
           fullWidth={fullWidth}
           error={!!error}
           helperText={error?.message as string | undefined}
+          onFocus={(e) => {
+            if (type === 'number' && field.value === 0) {
+              field.onChange('');
+            }
+            if (rest.onFocus) {
+              rest.onFocus(e);
+            }
+          }}
+          onBlur={(e) => {
+            if (type === 'number' && field.value === '') {
+              field.onChange(0);
+            }
+            if (rest.onBlur) {
+              rest.onBlur(e);
+            }
+          }}
         />
       )}
     />

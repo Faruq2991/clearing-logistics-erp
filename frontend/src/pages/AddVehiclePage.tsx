@@ -49,11 +49,18 @@ const vehicleSchema = z.object({
   terminal: z.string().optional(),
   arrival_date: z.date().optional().nullable(),
   status: z.string().min(1, 'Status is required'),
+  agencies: z.coerce.number().optional(),
+  examination: z.coerce.number().optional(),
+  release: z.coerce.number().optional(),
+  disc: z.coerce.number().optional(),
+  gate: z.coerce.number().optional(),
+  ciu: z.coerce.number().optional(),
+  monitoring: z.coerce.number().optional(),
 });
 
 type VehicleFormInputs = z.infer<typeof vehicleSchema>;
 
-const steps = ['Vehicle Information', 'Shipping Details', 'Review'];
+const steps = ['Vehicle Information', 'Shipping Details', 'Cost of Running', 'Review'];
 
 // Vehicle makes with their models
 const VEHICLE_MAKES = {
@@ -92,67 +99,6 @@ const TERMINALS = [
   { value: 'grimaldi', label: 'Grimaldi' },
   { value: 'apapa', label: 'Apapa' },
 ];
-
-function Review() {
-  const { getValues } = useFormContext();
-  const values = getValues();
-
-  return (
-    <Box>
-      <Typography variant="h6" gutterBottom>
-        Vehicle Information
-      </Typography>
-      <List disablePadding>
-        <ListItem>
-          <ListItemText 
-            primary="VIN" 
-            secondary={values.vin || 'Not provided'} 
-            slotProps={{ 
-              secondary: { sx: { fontFamily: 'monospace', fontSize: '0.95rem' } }
-            }}
-          />
-        </ListItem>
-        <ListItem>
-          <ListItemText primary="Make" secondary={values.make || 'Not provided'} />
-        </ListItem>
-        <ListItem>
-          <ListItemText primary="Model" secondary={values.model || 'Not provided'} />
-        </ListItem>
-        <ListItem>
-          <ListItemText primary="Year" secondary={values.year || 'Not provided'} />
-        </ListItem>
-        <ListItem>
-          <ListItemText primary="Color" secondary={values.color || 'N/A'} />
-        </ListItem>
-      </List>
-      <Divider sx={{ my: 2 }} />
-      <Typography variant="h6" gutterBottom>
-        Shipping Details
-      </Typography>
-      <List disablePadding>
-        <ListItem>
-          <ListItemText primary="Ship Name" secondary={values.ship_name || 'N/A'} />
-        </ListItem>
-        <ListItem>
-          <ListItemText 
-            primary="Terminal" 
-            secondary={
-              values.terminal 
-                ? TERMINALS.find(t => t.value === values.terminal)?.label || values.terminal
-                : 'N/A'
-            } 
-          />
-        </ListItem>
-        <ListItem>
-          <ListItemText 
-            primary="Arrival Date" 
-            secondary={values.arrival_date ? new Date(values.arrival_date).toLocaleDateString() : 'N/A'} 
-          />
-        </ListItem>
-      </List>
-    </Box>
-  );
-}
 
 function VehicleMakeField() {
   const { control, setValue } = useFormContext<VehicleFormInputs>();
@@ -217,6 +163,128 @@ function VehicleModelField() {
       )}
     />
   );
+}
+
+function Review() {
+  const { getValues } = useFormContext();
+  const values = getValues();
+  const costFields = ['agencies', 'examination', 'release', 'disc', 'gate', 'ciu', 'monitoring'];
+  const totalCost = costFields.reduce((acc, field) => acc + (Number(values[field]) || 0), 0);
+
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        Vehicle Information
+      </Typography>
+      <List disablePadding>
+        <ListItem>
+          <ListItemText primary="VIN" secondary={values.vin || 'Not provided'} />
+        </ListItem>
+        <ListItem>
+          <ListItemText primary="Make" secondary={values.make || 'Not provided'} />
+        </ListItem>
+        <ListItem>
+          <ListItemText primary="Model" secondary={values.model || 'Not provided'} />
+        </ListItem>
+        <ListItem>
+          <ListItemText primary="Year" secondary={values.year || 'Not provided'} />
+        </ListItem>
+        <ListItem>
+          <ListItemText primary="Color" secondary={values.color || 'N/A'} />
+        </ListItem>
+      </List>
+      <Divider sx={{ my: 2 }} />
+      <Typography variant="h6" gutterBottom>
+        Shipping Details
+      </Typography>
+      <List disablePadding>
+        <ListItem>
+          <ListItemText primary="Ship Name" secondary={values.ship_name || 'N/A'} />
+        </ListItem>
+        <ListItem>
+          <ListItemText 
+            primary="Terminal" 
+            secondary={
+              values.terminal 
+                ? TERMINALS.find(t => t.value === values.terminal)?.label || values.terminal
+                : 'N/A'
+            } 
+          />
+        </ListItem>
+        <ListItem>
+          <ListItemText 
+            primary="Arrival Date" 
+            secondary={values.arrival_date ? new Date(values.arrival_date).toLocaleDateString() : 'N/A'} 
+          />
+        </ListItem>
+      </List>
+      <Divider sx={{ my: 2 }} />
+      <Typography variant="h6" gutterBottom>
+        Cost of Running
+      </Typography>
+      <List disablePadding>
+        {costFields.map((field) => (
+          <ListItem key={field}>
+            <ListItemText primary={field.charAt(0).toUpperCase() + field.slice(1)} secondary={values[field] ? `₦${Number(values[field]).toLocaleString()}` : 'N/A'} />
+          </ListItem>
+        ))}
+        <ListItem>
+            <ListItemText primary="Total" secondary={`₦${totalCost.toLocaleString()}`} />
+        </ListItem>
+      </List>
+    </Box>
+  );
+}
+
+function CostOfRunningStep() {
+    const { watch, getValues } = useFormContext<VehicleFormInputs>();
+    const vehicleYear = watch('year');
+    const [total, setTotal] = useState(0);
+
+    const handleCalculate = () => {
+        const values = getValues();
+        const costFields = ['agencies', 'examination', 'release', 'disc', 'gate', 'ciu', 'monitoring'];
+        const totalCost = costFields.reduce((acc, field) => acc + (Number(values[field as keyof VehicleFormInputs]) || 0), 0);
+        setTotal(totalCost);
+    }
+
+    return (
+        <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+                <InputField name="agencies" label="Agencies" type="number" />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+                <InputField name="examination" label="Examination" type="number" />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+                <InputField name="release" label="Release" type="number" />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+                <InputField name="disc" label="Disc" type="number" />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+                <InputField name="gate" label="Gate" type="number" />
+            </Grid>
+            {vehicleYear && vehicleYear >= 2017 && (
+                <>
+                    <Grid item xs={12} sm={6}>
+                        <InputField name="ciu" label="CIU" type="number" />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <InputField name="monitoring" label="Monitoring" type="number" />
+                    </Grid>
+                </>
+            )}
+            <Grid item xs={12}>
+                <Button variant="contained" onClick={handleCalculate}>Calculate Total</Button>
+            </Grid>
+            {total > 0 && (
+                <Grid item xs={12}>
+                    <Typography variant="h6">Total: ₦{total.toLocaleString()}</Typography>
+                </Grid>
+            )}
+        </Grid>
+    );
 }
 
 function getStepContent(step: number) {
@@ -321,8 +389,11 @@ function getStepContent(step: number) {
           </Grid>
         </Grid>
       );
-      
+    
     case 2:
+        return <CostOfRunningStep />;
+      
+    case 3:
       return <Review />;
       
     default:
@@ -347,17 +418,32 @@ export default function AddVehiclePage() {
       terminal: '',
       arrival_date: null,
       status: 'IN_TRANSIT',
+      agencies: 0,
+      examination: 0,
+      release: 0,
+      disc: 0,
+      gate: 0,
+      ciu: 0,
+      monitoring: 0,
     },
   });
 
   const { trigger } = methods;
 
   const handleNext = async () => {
-    const fields: (keyof VehicleFormInputs)[] =
-      activeStep === 0
-        ? ['vin', 'make', 'model', 'year']
-        : ['ship_name', 'terminal', 'arrival_date'];
-    const isValid = await trigger(fields);
+    let fields: (keyof VehicleFormInputs)[] = [];
+    switch(activeStep) {
+        case 0:
+            fields = ['vin', 'make', 'model', 'year'];
+            break;
+        case 1:
+            fields = ['ship_name', 'terminal', 'arrival_date'];
+            break;
+        case 2:
+            // No validation for cost of running for now
+            break;
+    }
+    const isValid = fields.length > 0 ? await trigger(fields) : true;
     if (isValid) {
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
     }
@@ -412,8 +498,8 @@ export default function AddVehiclePage() {
             </Button>
             {activeStep === steps.length - 1 ? (
               <Button
-                type="submit"
                 variant="contained"
+                onClick={methods.handleSubmit(onSubmit)}
                 disabled={createVehicle.isPending}
               >
                 {createVehicle.isPending ? 'Submitting...' : 'Submit Vehicle'}
