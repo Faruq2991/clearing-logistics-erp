@@ -3,6 +3,7 @@ Audit logging utility for financial and vehicle changes.
 """
 import json
 from typing import Any, Optional
+from datetime import datetime
 
 from sqlalchemy.orm import Session
 
@@ -23,7 +24,9 @@ def log_action(
         if v is None:
             return None
         if isinstance(v, (dict, list)):
-            return json.dumps(v)
+            return json.dumps(v, default=str)
+        if isinstance(v, datetime):
+            return v.isoformat()
         return str(v)
 
     entry = AuditLog(

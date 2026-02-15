@@ -12,6 +12,13 @@ class VehicleCreate(BaseModel):
     terminal: Optional[str] = None
     arrival_date: Optional[datetime] = None
     status: str = "In Transit"
+    agencies: Optional[float] = None
+    examination: Optional[float] = None
+    release: Optional[float] = None
+    disc: Optional[float] = None
+    gate: Optional[float] = None
+    ciu: Optional[float] = None
+    monitoring: Optional[float] = None
 
 class VehicleResponse(VehicleCreate):
     id: int

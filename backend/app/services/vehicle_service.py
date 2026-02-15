@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 from app.models.main import Vehicle
 from app.schemas.main import VehicleCreate, VehicleResponse
 from app.models.user import User, UserRole
+from app.core.auditing import log_action
 
 def create_new_vehicle(db: Session, vehicle_data: VehicleCreate, current_user_id: int) -> Vehicle:
     db_vehicle = db.query(Vehicle).filter(Vehicle.vin == vehicle_data.vin).first()
@@ -16,6 +17,17 @@ def create_new_vehicle(db: Session, vehicle_data: VehicleCreate, current_user_id
     db.add(new_vehicle)
     db.commit()
     db.refresh(new_vehicle)
+    
+    log_action(
+        db=db,
+        user_id=current_user_id,
+        action="create",
+        table_name="vehicles",
+        record_id=new_vehicle.id,
+        new_value=vehicle_data.model_dump()
+    )
+    db.commit()
+    
     return new_vehicle
 
 def get_vehicles_list(db: Session, current_user: User, skip: int = 0, limit: int = 100, search: str = None, status: str = None) -> List[Vehicle]:

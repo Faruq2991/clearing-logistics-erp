@@ -1,4 +1,4 @@
-import { useParams, Link as RouterLink } from 'react-router-dom';
+import { useParams, Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -16,15 +16,21 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { useState } from 'react';
-import { useVehicle, useUpdateVehicleStatus } from '../hooks/useVehicles';
+import { useVehicle, useUpdateVehicleStatus, useDeleteVehicle } from '../hooks/useVehicles';
 import {
   ArrowBack as ArrowBackIcon,
   Description as DescriptionIcon,
   AttachMoney as AttachMoneyIcon,
   Info as InfoIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import ErrorAlert from '../components/ErrorAlert';
 import { useAuth } from '../contexts/AuthContext';
@@ -54,11 +60,11 @@ function TabPanel(props: TabPanelProps) {
 
 const getStatusChipColor = (status: string) => {
     switch (status) {
-      case 'IN_TRANSIT':
+      case 'In Transit':
         return 'info';
-      case 'CLEARING':
+      case 'Clearing':
         return 'warning';
-      case 'DONE':
+      case 'Done':
         return 'success';
       default:
         return 'default';
@@ -68,14 +74,27 @@ const getStatusChipColor = (status: string) => {
 export default function VehicleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const vehicleId = id ? parseInt(id, 10) : null;
+  const navigate = useNavigate();
   const { data: vehicle, isLoading, error } = useVehicle(vehicleId);
   const [tab, setTab] = useState(0);
   const { user } = useAuth();
   const { mutateAsync: updateStatus, isPending: isUpdatingStatus } = useUpdateVehicleStatus(vehicleId!);
+  const { mutateAsync: deleteVehicle, isPending: isDeleting } = useDeleteVehicle();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const handleStatusChange = async (newStatus: string) => {
     if (vehicle && newStatus !== vehicle.status) {
       await updateStatus(newStatus);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!vehicleId) return;
+    try {
+      await deleteVehicle(vehicleId);
+      navigate('/vehicles');
+    } catch (e) {
+      // Error is already logged in the hook
     }
   };
 
@@ -143,6 +162,19 @@ export default function VehicleDetailPage() {
                   <Typography><strong>Model:</strong> {vehicle.model}</Typography>
                   <Typography><strong>Year:</strong> {vehicle.year}</Typography>
                   <Typography><strong>Color:</strong> {vehicle.color ?? '—'}</Typography>
+                  {user?.role === 'admin' && (
+                    <Box mt={2}>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        startIcon={<DeleteIcon />}
+                        onClick={() => setDeleteConfirmOpen(true)}
+                        disabled={isDeleting}
+                      >
+                        Delete Vehicle
+                      </Button>
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -165,9 +197,9 @@ export default function VehicleDetailPage() {
                           onChange={(e) => handleStatusChange(e.target.value)}
                           disabled={isUpdatingStatus}
                         >
-                          <MenuItem value="IN_TRANSIT">In Transit</MenuItem>
-                          <MenuItem value="CLEARING">Clearing</MenuItem>
-                          <MenuItem value="DONE">Done</MenuItem>
+                          <MenuItem value="In Transit">In Transit</MenuItem>
+                          <MenuItem value="Clearing">Clearing</MenuItem>
+                          <MenuItem value="Done">Done</MenuItem>
                         </Select>
                       </FormControl>
                     ) : (
@@ -192,12 +224,29 @@ export default function VehicleDetailPage() {
                 <Typography color="text.secondary">
                   Financial details and payment tracking are under development.
                 </Typography>
-                 {/* Placeholder for financial info */}
               </CardContent>
             </Card>
           </TabPanel>
         )}
       </Paper>
+
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+      >
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to permanently delete this vehicle? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+          <Button onClick={handleDelete} color="error" disabled={isDeleting}>
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

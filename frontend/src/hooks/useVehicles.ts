@@ -6,7 +6,7 @@ import type { VehicleCreate, VehicleResponse } from '../types';
 export function useVehicles(skip = 0, limit = 100, search: string | null = null, status: string | null = null) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['vehicles', skip, limit, search, status],
-    queryFn: () => vehiclesApi.list({ skip, limit, search, status }).then((r) => r.data),
+        queryFn: () => vehiclesApi.list({ skip, limit, search, status }).then((r) => r.data),
   });
 
   return { data, isLoading, error: error ? getErrorMessage(error) : null };
@@ -26,7 +26,10 @@ export function useCreateVehicle() {
   const qc = useQueryClient();
   const { mutateAsync, isPending, error } = useMutation({
     mutationFn: (data: VehicleCreate) => vehiclesApi.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['vehicles'] }),
+    onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ['vehicles'] });
+        qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
+    },
     onError: (err) => {
       console.error("Error creating vehicle:", getErrorMessage(err));
     },
@@ -46,9 +49,30 @@ export function useUpdateVehicleStatus(id: number) {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['vehicle', id] });
             qc.invalidateQueries({ queryKey: ['vehicles'] });
+            qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
         },
         onError: (err) => {
             console.error("Error updating vehicle status:", getErrorMessage(err));
+        },
+    });
+
+    return {
+        mutateAsync,
+        isPending,
+        error: error ? getErrorMessage(error) : null,
+    };
+}
+
+export function useDeleteVehicle() {
+    const qc = useQueryClient();
+    const { mutateAsync, isPending, error } = useMutation({
+        mutationFn: (id: number) => vehiclesApi.delete(id),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['vehicles'] });
+            qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        },
+        onError: (err) => {
+            console.error("Error deleting vehicle:", getErrorMessage(err));
         },
     });
 

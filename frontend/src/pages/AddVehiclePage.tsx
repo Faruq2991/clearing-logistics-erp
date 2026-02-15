@@ -455,7 +455,11 @@ export default function AddVehiclePage() {
 
   const onSubmit = async (data: VehicleFormInputs) => {
     try {
-      const res = await createVehicle.mutateAsync(data as VehicleCreate);
+      const dataToSend: VehicleCreate = {
+        ...data,
+        arrival_date: data.arrival_date ? data.arrival_date.toISOString() : undefined,
+      };
+      const res = await createVehicle.mutateAsync(dataToSend);
       navigate(`/vehicles/${res.data.id}`);
     } catch (err) {
       // Error handled by mutation hook

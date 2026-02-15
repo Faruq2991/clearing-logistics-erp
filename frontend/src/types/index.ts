@@ -33,6 +33,13 @@ export interface VehicleCreate {
   terminal?: string;
   arrival_date?: string;
   status?: string;
+  agencies?: number;
+  examination?: number;
+  release?: number;
+  disc?: number;
+  gate?: number;
+  ciu?: number;
+  monitoring?: number;
 }
 
 export interface VehicleResponse extends VehicleCreate {

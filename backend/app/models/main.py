@@ -27,6 +27,13 @@ class Vehicle(Base):
     arrival_date = Column(DateTime)
     status = Column(String, default="In Transit")
     owner_id = Column(Integer, ForeignKey("users.id"))
+    agencies = Column(Float, nullable=True)
+    examination = Column(Float, nullable=True)
+    release = Column(Float, nullable=True)
+    disc = Column(Float, nullable=True)
+    gate = Column(Float, nullable=True)
+    ciu = Column(Float, nullable=True)
+    monitoring = Column(Float, nullable=True)
     
     # Relationships
     owner = relationship("User")

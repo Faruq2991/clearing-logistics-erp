@@ -9,11 +9,11 @@ import ErrorAlert from '../components/ErrorAlert';
 
 const getStatusChipColor = (status: string) => {
   switch (status) {
-    case 'IN_TRANSIT':
+    case 'In Transit':
       return 'info';
-    case 'CLEARING':
+    case 'Clearing':
       return 'warning';
-    case 'DONE':
+    case 'Done':
       return 'success';
     default:
       return 'default';
@@ -127,9 +127,9 @@ export default function VehiclesPage() {
             >
               <MenuItem value="ALL"> All</MenuItem>
               
-              <MenuItem value="IN_TRANSIT">In Transit</MenuItem>
-              <MenuItem value="CLEARING">Clearing</MenuItem>
-              <MenuItem value="DONE">Done</MenuItem>
+              <MenuItem value="In Transit">In Transit</MenuItem>
+              <MenuItem value="Clearing">Clearing</MenuItem>
+              <MenuItem value="Done">Done</MenuItem>
             </Select>
           </FormControl>
         </Grid>
