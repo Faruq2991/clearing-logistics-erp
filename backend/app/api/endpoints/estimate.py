@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
-from app.schemas.estimate import CostOfRunning, CostOfRunningCreate
+from app.schemas.estimate import CostOfRunning, CostOfRunningCreate, GlobalSearchResult
 
 # Import the new service
 from app.services import estimate_service
@@ -12,21 +12,23 @@ from app.services import estimate_service
 router = APIRouter()
 
 
-@router.get("/global-search")
+@router.get("/global-search", response_model=GlobalSearchResult)
 def search_estimate(
     make: str,
     model: str,
     year: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user), # Keep for dependency chain but not directly used by service
+    current_user: User = Depends(get_current_user),
 ):
     """
     Smart Estimator: Historical clearing cost estimate with exchange rate normalization.
     Fetches matching records (Make, Model, Year), adjusts Naira costs to current market
     using exchange_rate_at_clearing vs CUSTOMS_EXCHANGE_RATE, returns weighted average.
     """
-    return estimate_service.get_clearing_cost_estimate(db, make, model, year)
-
+    result = estimate_service.get_clearing_cost_estimate(db, make, model, year)
+    if result is None:
+        raise HTTPException(status_code=404, detail="No historical data found for this model and year.")
+    return result
 
 @router.post("/cost-of-running", response_model=CostOfRunning)
 def get_cost_of_running(

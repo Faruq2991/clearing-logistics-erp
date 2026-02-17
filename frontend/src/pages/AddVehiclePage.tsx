@@ -27,6 +27,7 @@ import ErrorAlert from '../components/ErrorAlert';
 import Form from '../components/form/Form';
 import InputField from '../components/form/InputField';
 import SelectField from '../components/form/SelectField';
+import EstimateDisplay from '../components/EstimateDisplay';
 
 
 
@@ -291,44 +292,47 @@ function getStepContent(step: number) {
   switch (step) {
     case 0:
       return (
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <InputField
-              name="vin"
-              label="VIN"
-              required
-              inputProps={{
-                style: { textTransform: 'uppercase' },
-                maxLength: 17,
-              }}
-              helperText="17 characters, alphanumeric (excluding I, O, Q)"
-            />
+        <>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <InputField
+                name="vin"
+                label="VIN"
+                required
+                inputProps={{
+                  style: { textTransform: 'uppercase' },
+                  maxLength: 17,
+                }}
+                helperText="17 characters, alphanumeric (excluding I, O, Q)"
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={4}>
+              <VehicleMakeField />
+            </Grid>
+            
+            <Grid item xs={12} sm={4}>
+              <VehicleModelField />
+            </Grid>
+            
+            <Grid item xs={12} sm={4}>
+              <InputField
+                name="year"
+                label="Year"
+                type="number"
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <InputField
+                name="color"
+                label="Color"
+              />
+            </Grid>
           </Grid>
-          
-          <Grid item xs={12} sm={4}>
-            <VehicleMakeField />
-          </Grid>
-          
-          <Grid item xs={12} sm={4}>
-            <VehicleModelField />
-          </Grid>
-          
-          <Grid item xs={12} sm={4}>
-            <InputField
-              name="year"
-              label="Year"
-              type="number"
-              required
-            />
-          </Grid>
-          
-          <Grid item xs={12}>
-            <InputField
-              name="color"
-              label="Color"
-            />
-          </Grid>
-        </Grid>
+          <EstimateDisplay />
+        </>
       );
       
     case 1:
@@ -455,8 +459,19 @@ export default function AddVehiclePage() {
 
   const onSubmit = async (data: VehicleFormInputs) => {
     try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Set to start of today for accurate comparison
+
+      let status = data.status; // Default to the current status in the form
+      if (data.arrival_date) {
+        const arrivalDate = new Date(data.arrival_date);
+        arrivalDate.setHours(0, 0, 0, 0); // Normalize arrival date
+        status = arrivalDate > today ? 'In Transit' : 'Clearing';
+      }
+
       const dataToSend: VehicleCreate = {
         ...data,
+        status,
         arrival_date: data.arrival_date ? data.arrival_date.toISOString() : undefined,
       };
       const res = await createVehicle.mutateAsync(dataToSend);

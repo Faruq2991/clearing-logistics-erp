@@ -1,10 +1,24 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class GlobalSearch(BaseModel):
+    make: str
+    model: str
+    year: int
+
+
+class GlobalSearchResult(BaseModel):
+    average_clearing_cost: float
+    sample_size: int
+    is_normalized: bool
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CostOfRunningCreate(BaseModel):
-    vehicle_cost: float
-    shipping_fees: float
-    customs_duty: float
+    vehicle_cost: float = Field(gt=0)
+    shipping_fees: float = Field(gt=0)
+    customs_duty: float = Field(gt=0)
     terminal: str
 
 

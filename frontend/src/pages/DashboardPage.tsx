@@ -133,6 +133,14 @@ export default function DashboardPage() {
                 >
                   View All Vehicles
                 </Button>
+                <Button
+                  component={RouterLink}
+                  to="/cost-of-running"
+                  variant="outlined"
+                  size="large"
+                >
+                  Cost of Running Calculator
+                </Button>
               </Box>
             </CardContent>
           </Card>

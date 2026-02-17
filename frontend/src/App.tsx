@@ -14,6 +14,7 @@ import VehiclesPage from './pages/VehiclesPage';
 import VehicleDetailPage from './pages/VehicleDetailPage';
 import AddVehiclePage from './pages/AddVehiclePage';
 import CreateUserPage from './pages/CreateUserPage';
+import CostOfRunningPage from './pages/CostOfRunningPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,6 +52,7 @@ const router = createBrowserRouter([
       { path: 'vehicles/:id', element: <VehicleDetailPage /> },
       { path: 'users', element: <UsersPage /> },
       { path: 'users/new', element: <CreateUserPage /> },
+      { path: 'cost-of-running', element: <CostOfRunningPage /> },
     ],
   },
   {

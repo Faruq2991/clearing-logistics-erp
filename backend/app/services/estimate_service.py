@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 from decouple import config
 from app.models.main import Vehicle, Financials
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
-def get_clearing_cost_estimate(db: Session, make: str, model: str, year: int) -> Dict[str, Any]:
+def get_clearing_cost_estimate(db: Session, make: str, model: str, year: int) -> Optional[Dict[str, Any]]:
     historical_data = (
         db.query(Financials)
         .join(Vehicle)
@@ -16,7 +16,7 @@ def get_clearing_cost_estimate(db: Session, make: str, model: str, year: int) ->
     )
 
     if not historical_data:
-        return {"estimate": "No historical data found for this year/model"}
+        return None
 
     try:
         current_rate = config("CUSTOMS_EXCHANGE_RATE", default=None)

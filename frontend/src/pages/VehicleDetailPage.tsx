@@ -35,6 +35,7 @@ import {
 import ErrorAlert from '../components/ErrorAlert';
 import { useAuth } from '../contexts/AuthContext';
 import DocumentsTab from '../components/DocumentsTab';
+import FinancialsTab from '../components/FinancialsTab';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -218,15 +219,8 @@ export default function VehicleDetailPage() {
 
         {user?.role === 'admin' && (
           <TabPanel value={tab} index={2}>
-            <Card>
-              <CardHeader title="Financial Summary" />
-              <CardContent>
-                <Typography color="text.secondary">
-                  Financial details and payment tracking are under development.
-                </Typography>
-              </CardContent>
-            </Card>
-          </TabPanel>
+            {vehicleId && <FinancialsTab vehicleId={vehicleId} />}
+        </TabPanel>
         )}
       </Paper>
 
