@@ -14,7 +14,8 @@ import { getErrorMessage } from '../services/errorHandler';
 import ErrorAlert from '../components/ErrorAlert';
 import Form from '../components/form/Form';
 import InputField from '../components/form/InputField';
-import { authApi } from '../services/api'; // Import authApi instead of usersApi
+import { authApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const schema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
@@ -30,13 +31,14 @@ const schema = z.object({
 export default function RegisterPage() {
   const [serverError, setServerError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const onSubmit = async (data: z.infer<typeof schema>) => { // Use z.infer directly
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     setServerError(null);
     try {
-      // Use authApi.register
-      await authApi.register({ email: data.email, password: data.password, role: "USER" });
-      navigate('/login?registered=true'); // Redirect to login with a success message
+      await authApi.register({ email: data.email, password: data.password, role: "admin" });
+      await login(data.email, data.password);
+      navigate('/');
     } catch (err: unknown) {
       setServerError(getErrorMessage(err));
     }

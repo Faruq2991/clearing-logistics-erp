@@ -21,7 +21,7 @@ def get_vehicle_with_access(db: Session, vehicle_id: int, user: User) -> Vehicle
     if not vehicle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
     
-    if user.role == UserRole.GUEST and vehicle.owner_id != user.id:
+    if vehicle.owner_id != user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this vehicle")
         
     return vehicle

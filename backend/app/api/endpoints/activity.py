@@ -18,4 +18,4 @@ def read_recent_activities(
     """
     Retrieve recent activities (audit logs).
     """
-    return activity_service.get_recent_activities(db, limit=limit)
+    return activity_service.get_recent_activities(db, current_user, limit=limit)

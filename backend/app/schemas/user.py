@@ -5,7 +5,7 @@ from app.models.user import UserRole
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
-    role: Optional[UserRole] = UserRole.GUEST
+    role: Optional[UserRole] = UserRole.ADMIN
 
 class UserResponse(BaseModel):
     id: int

@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, func
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, func, Enum
 from sqlalchemy.orm import relationship
 from app.database import Base
 from .user import User
@@ -13,11 +13,18 @@ class DocumentType(str, enum.Enum):
     DELIVERY_ORDER = "delivery_order"
 
 
+class ClearanceType(str, enum.Enum):
+    FULL = "FULL"
+    RELEASE_GATE = "RELEASE_GATE"
+
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, func, Enum, UniqueConstraint
+
 class Vehicle(Base):
     __tablename__ = "vehicles"
+    __table_args__ = (UniqueConstraint('vin', 'owner_id', name='uq_vin_owner'),)
 
     id = Column(Integer, primary_key=True, index=True)
-    vin = Column(String, unique=True, index=True)
+    vin = Column(String, index=True)
     make = Column(String)
     model = Column(String)
     year = Column(Integer)
@@ -34,6 +41,12 @@ class Vehicle(Base):
     gate = Column(Float, nullable=True)
     ciu = Column(Float, nullable=True)
     monitoring = Column(Float, nullable=True)
+    cpc = Column(Float, nullable=True)
+    valuation = Column(Float, nullable=True)
+    customs_duty = Column(Float, nullable=True)
+    comet_shipping = Column(Float, nullable=True)
+    terminal_charges = Column(Float, nullable=True)
+    clearance_type = Column(Enum(ClearanceType), nullable=False, server_default="FULL", default=ClearanceType.FULL)
     
     # Relationships
     owner = relationship("User")

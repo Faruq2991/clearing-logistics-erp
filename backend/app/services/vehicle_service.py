@@ -3,21 +3,45 @@ from sqlalchemy import or_
 from typing import List
 from fastapi import HTTPException, status
 
-from app.models.main import Vehicle
+from app.models.main import Vehicle, Financials
 from app.schemas.main import VehicleCreate, VehicleResponse
 from app.models.user import User, UserRole
 from app.core.auditing import log_action
 
 def create_new_vehicle(db: Session, vehicle_data: VehicleCreate, current_user_id: int) -> Vehicle:
-    db_vehicle = db.query(Vehicle).filter(Vehicle.vin == vehicle_data.vin).first()
+    db_vehicle = db.query(Vehicle).filter(
+        Vehicle.vin == vehicle_data.vin,
+        Vehicle.owner_id == current_user_id
+    ).first()
     if db_vehicle:
-        raise HTTPException(status_code=400, detail="VIN already registered")
+        raise HTTPException(status_code=400, detail="VIN already registered for this user")
     
-    new_vehicle = Vehicle(**vehicle_data.model_dump(), owner_id=current_user_id)
+    # Separate estimated_total_cost before creating the Vehicle object
+    vehicle_dict = vehicle_data.model_dump()
+    estimated_cost = vehicle_dict.pop("estimated_total_cost", None)
+
+    new_vehicle = Vehicle(**vehicle_dict, owner_id=current_user_id)
     db.add(new_vehicle)
     db.commit()
     db.refresh(new_vehicle)
-    
+
+    # If an estimated cost was provided (for "Full Clearance"), create a financials record
+    if estimated_cost is not None:
+        financials = Financials(
+            vehicle_id=new_vehicle.id,
+            total_cost=estimated_cost,
+            amount_paid=0
+        )
+        db.add(financials)
+        log_action(
+            db=db,
+            user_id=current_user_id,
+            action="create",
+            table_name="financials",
+            record_id=financials.id,
+            new_value={"total_cost": estimated_cost}
+        )
+
     log_action(
         db=db,
         user_id=current_user_id,
@@ -31,10 +55,7 @@ def create_new_vehicle(db: Session, vehicle_data: VehicleCreate, current_user_id
     return new_vehicle
 
 def get_vehicles_list(db: Session, current_user: User, skip: int = 0, limit: int = 100, search: str = None, status: str = None) -> List[Vehicle]:
-    query = db.query(Vehicle)
-
-    if current_user.role not in [UserRole.ADMIN, UserRole.STAFF]:
-        query = query.filter(Vehicle.owner_id == current_user.id)
+    query = db.query(Vehicle).filter(Vehicle.owner_id == current_user.id)
 
     if search:
         query = query.filter(
@@ -55,7 +76,7 @@ def get_vehicle_by_id(db: Session, vehicle_id: int, current_user: User) -> Vehic
     if db_vehicle is None:
         raise HTTPException(status_code=404, detail="Vehicle not found")
     
-    if current_user.role not in [UserRole.ADMIN, UserRole.STAFF] and db_vehicle.owner_id != current_user.id:
+    if db_vehicle.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to view this vehicle")
     
     return db_vehicle
@@ -91,3 +112,6 @@ def update_vehicle_status(db: Session, vehicle_id: int, new_status: str) -> Vehi
     db.commit()
     db.refresh(db_vehicle)
     return db_vehicle
+
+def check_vin_exists(db: Session, vin: str, current_user_id: int) -> bool:
+    return db.query(Vehicle).filter(Vehicle.vin == vin, Vehicle.owner_id == current_user_id).first() is not None

@@ -32,8 +32,7 @@ const drawerWidth = 240;
 const navItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'Vehicles', icon: <CarIcon />, path: '/vehicles' },
-  { text: 'Financials', icon: <AttachMoneyIcon />, path: '/financials', adminOnly: true },
-  { text: 'Create User', icon: <GroupAddIcon />, path: '/users/new', adminOnly: true },
+  { text: 'Financials', icon: <AttachMoneyIcon />, path: '/financials' },
 ];
 
 export default function Layout() {
@@ -64,20 +63,14 @@ export default function Layout() {
       </Toolbar>
       <Divider />
       <List>
-        {navItems.map((item) => {
-          // Conditionally render based on adminOnly flag and user role
-          if (item.adminOnly && user?.role !== 'admin') {
-            return null;
-          }
-          return (
-            <ListItem key={item.text} disablePadding>
-              <ListItemButton component={RouterLink} to={item.path}>
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
-              </ListItemButton>
-            </ListItem>
-          );
-        })}
+        {navItems.map((item) => (
+          <ListItem key={item.text} disablePadding>
+            <ListItemButton component={RouterLink} to={item.path}>
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
       </List>
     </div>
   );

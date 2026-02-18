@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../services/api';
 import { jwtDecode } from 'jwt-decode';
 
@@ -33,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.getItem('access_token')
   );
   const [user, setUser] = useState<User | null>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (token) {
@@ -48,12 +50,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(t);
     const decodedUser = decodeToken(t);
     setUser(decodedUser);
+    queryClient.clear();
   };
 
   const logout = () => {
     localStorage.removeItem('access_token');
     setToken(null);
     setUser(null);
+    queryClient.clear();
   };
 
   return (

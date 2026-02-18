@@ -19,6 +19,13 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+function formatMatchType(matchType: string): string {
+    return matchType
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' & ');
+}
+
 export default function EstimateDisplay() {
   const { watch } = useFormContext();
   const make = watch('make');
@@ -53,8 +60,13 @@ export default function EstimateDisplay() {
             ₦{data.average_clearing_cost.toLocaleString()}
           </Typography>
           {data.is_normalized && (
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
               (Normalized for current exchange rate)
+            </Typography>
+          )}
+          {data.match_type && (
+            <Typography variant="caption" color="text.secondary">
+              Match Type: {formatMatchType(data.match_type)}
             </Typography>
           )}
         </Box>

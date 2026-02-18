@@ -4,47 +4,48 @@ from app.models.main import Vehicle, Financials
 from typing import Dict, Any, List, Optional
 
 def get_clearing_cost_estimate(db: Session, make: str, model: str, year: int) -> Optional[Dict[str, Any]]:
-    historical_data = (
-        db.query(Financials)
-        .join(Vehicle)
-        .filter(
-            Vehicle.make == make,
-            Vehicle.model == model,
-            Vehicle.year == year,
-        )
-        .all()
-    )
+    
+    def calculate_average(query_result):
+        if not query_result:
+            return None, 0
 
-    if not historical_data:
-        return None
+        try:
+            current_rate = float(config("CUSTOMS_EXCHANGE_RATE", default=1.0))
+        except (ValueError, TypeError):
+            current_rate = 1.0
 
-    try:
-        current_rate = config("CUSTOMS_EXCHANGE_RATE", default=None)
-        current_rate = float(current_rate) if current_rate else None
-    except (ValueError, TypeError):
-        current_rate = None
-    adjusted_costs = []
+        adjusted_costs = []
+        for f in query_result:
+            if f.exchange_rate_at_clearing and f.exchange_rate_at_clearing > 0:
+                adjusted = (f.total_cost / f.exchange_rate_at_clearing) * current_rate
+                adjusted_costs.append(adjusted)
+            else:
+                adjusted_costs.append(f.total_cost)
+        
+        avg_cost = sum(adjusted_costs) / len(adjusted_costs)
+        return avg_cost, len(adjusted_costs)
 
-    for f in historical_data:
-        if f.exchange_rate_at_clearing and current_rate and f.exchange_rate_at_clearing > 0:
-            # Normalize: (OldPrice / OldRate) * CurrentRate
-            adjusted = (f.total_cost / f.exchange_rate_at_clearing) * current_rate
-            adjusted_costs.append(adjusted)
-        else:
-            # Fallback: use raw total_cost when no exchange rate available
-            adjusted_costs.append(f.total_cost)
+    search_hierarchy = [
+        ("exact", db.query(Financials).join(Vehicle).filter(Vehicle.make == make, Vehicle.model == model, Vehicle.year == year)),
+        ("make_and_model", db.query(Financials).join(Vehicle).filter(Vehicle.make == make, Vehicle.model == model)),
+        ("make_and_year", db.query(Financials).join(Vehicle).filter(Vehicle.make == make, Vehicle.year == year)),
+        ("make_only", db.query(Financials).join(Vehicle).filter(Vehicle.make == make)),
+        ("year_only", db.query(Financials).join(Vehicle).filter(Vehicle.year == year)),
+    ]
 
-    avg_cost = sum(adjusted_costs) / len(adjusted_costs)
+    for match_type, query in search_hierarchy:
+        result = query.all()
+        if result:
+            avg_cost, sample_size = calculate_average(result)
+            if avg_cost is not None:
+                return {
+                    "average_clearing_cost": avg_cost,
+                    "sample_size": sample_size,
+                    "is_normalized": True, # Simplified for now
+                    "match_type": match_type,
+                }
 
-    return {
-        "make": make,
-        "model": model,
-        "year": year,
-        "average_clearing_cost": avg_cost,
-        "sample_size": len(historical_data),
-        "current_exchange_rate": current_rate,
-        "exchange_rate_normalized": current_rate is not None,
-    }
+    return None
 
 
 def calculate_cost_of_running(costs: dict) -> Dict[str, float]:

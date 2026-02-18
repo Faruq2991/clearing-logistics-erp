@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from app.models.main import ClearanceType
 
 class VehicleCreate(BaseModel):
     vin: str
@@ -19,6 +20,8 @@ class VehicleCreate(BaseModel):
     gate: Optional[float] = None
     ciu: Optional[float] = None
     monitoring: Optional[float] = None
+    clearance_type: ClearanceType = ClearanceType.FULL
+    estimated_total_cost: Optional[float] = None
 
 class VehicleResponse(VehicleCreate):
     id: int

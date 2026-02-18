@@ -1,12 +1,16 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from app.models.main import AuditLog, User
+from app.models.main import AuditLog
+from app.models.user import User
 from app.schemas.activity import Activity
 
-def get_recent_activities(db: Session, limit: int = 20) -> List[Activity]:
+from app.models.user import User
+
+def get_recent_activities(db: Session, current_user: User, limit: int = 5) -> List[Activity]:
     recent_logs_with_users = (
         db.query(AuditLog, User.email)
         .outerjoin(User, AuditLog.user_id == User.id)
+        .filter(AuditLog.user_id == current_user.id)
         .order_by(AuditLog.created_at.desc())
         .limit(limit)
         .all()

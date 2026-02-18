@@ -16,7 +16,7 @@ from app.schemas.financials import (
     PaymentCreate,
     PaymentResponse,
 )
-from app.core.security import get_current_user, check_admin_privilege
+from app.core.security import get_current_user, check_admin_privilege, check_staff_privilege
 
 # Import the new service
 from app.services import financial_service
@@ -34,7 +34,7 @@ vehicle_financials_router = APIRouter()
 def get_vehicle_financials(
     vehicle_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(check_admin_privilege),
+    current_user: User = Depends(get_current_user),
 ):
     """Get financial summary for a vehicle (includes balance)."""
     return financial_service.get_financial_summary_for_vehicle(db, vehicle_id, current_user)
@@ -45,7 +45,7 @@ def create_vehicle_financials(
     vehicle_id: int,
     data: FinancialsCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(check_admin_privilege),
+    current_user: User = Depends(check_staff_privilege),
 ):
     """Create financials for a vehicle. One record per vehicle; returns 400 if already exists."""
     # The _get_vehicle_with_access check is implicitly handled inside the service function
@@ -59,7 +59,7 @@ def update_vehicle_financials(
     vehicle_id: int,
     data: FinancialsUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(check_admin_privilege),
+    current_user: User = Depends(check_staff_privilege),
 ):
     """Update financials (total_cost, exchange_rate)."""
     financial_service._get_vehicle_with_access(db, vehicle_id, current_user) # Ensure user has access to vehicle
@@ -71,7 +71,7 @@ def create_payment(
     vehicle_id: int,
     data: PaymentCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(check_admin_privilege),
+    current_user: User = Depends(check_staff_privilege),
 ):
     """Record a payment (installment). Allows overpayment (negative balance for refunds/credits)."""
     financial_service._get_vehicle_with_access(db, vehicle_id, current_user) # Ensure user has access to vehicle
@@ -84,7 +84,7 @@ def list_vehicle_payments(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: User = Depends(check_admin_privilege),
+    current_user: User = Depends(get_current_user),
 ):
     """List payments for a vehicle."""
     return financial_service.list_payments_for_vehicle(db, vehicle_id, current_user, skip, limit)
@@ -98,7 +98,7 @@ def list_financials(
     limit: int = 100,
     vehicle_id: Optional[int] = Query(None, description="Filter by vehicle ID"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(check_admin_privilege), # Endpoint handles role check
+    current_user: User = Depends(get_current_user),
 ):
-    """List all financials. Admin only. Optional filter by vehicle_id."""
-    return financial_service.list_all_financial_records(db, current_user, skip, limit, vehicle_id)
+    """List all financials for the current user."""
+    return financial_service.list_financial_records(db, current_user, skip, limit, vehicle_id)

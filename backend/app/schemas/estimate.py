@@ -11,6 +11,7 @@ class GlobalSearchResult(BaseModel):
     average_clearing_cost: float
     sample_size: int
     is_normalized: bool
+    match_type: str
 
     model_config = ConfigDict(from_attributes=True)
 

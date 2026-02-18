@@ -54,3 +54,7 @@ def delete_vehicle(vehicle_id: int, db: Session = Depends(get_db), current_user:
 @router.patch("/{vehicle_id}/status", response_model=VehicleResponse)
 def update_vehicle_status(vehicle_id: int, status: str, db: Session = Depends(get_db), current_user: User = Depends(check_staff_privilege)):
     return vehicle_service.update_vehicle_status(db, vehicle_id, status)
+
+@router.get("/check-vin/{vin}", response_model=bool)
+def check_vin(vin: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return vehicle_service.check_vin_exists(db, vin, current_user.id)
