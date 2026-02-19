@@ -1,0 +1,59 @@
+.card {
+  background-color: var(--card-background);
+  padding: var(--spacing-3);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--shadow-card);
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 var(--spacing-3) 0;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-2) 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.listItem:last-child {
+  border-bottom: none;
+}
+
+.activityDetails {
+  display: flex;
+  gap: var(--spacing-2);
+  align-items: center;
+}
+
+.userName {
+  font-weight: 600;
+}
+
+.action {
+  color: var(--secondary-text-color);
+}
+
+.target {
+  font-style: italic;
+}
+
+.timestamp {
+  color: var(--secondary-text-color);
+  font-size: 0.9rem;
+}
+
+.noActivity {
+  text-align: center;
+  color: var(--secondary-text-color);
+  padding: var(--spacing-4) 0;
+}
