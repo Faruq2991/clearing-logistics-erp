@@ -1,16 +1,23 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from typing import List, Optional
-from app.models.main import AuditLog
+from app.models.main import AuditLog, Vehicle
 from app.models.user import User
 from app.schemas.activity import Activity
 
-from app.models.user import User
-
 def get_recent_activities(db: Session, current_user: User, limit: int = 5) -> List[Activity]:
+    
+    user_vehicle_ids_query = db.query(Vehicle.id).filter(Vehicle.owner_id == current_user.id)
+    
     recent_logs_with_users = (
         db.query(AuditLog, User.email)
         .outerjoin(User, AuditLog.user_id == User.id)
-        .filter(AuditLog.user_id == current_user.id)
+        .filter(
+            or_(
+                AuditLog.user_id == current_user.id,
+                (AuditLog.table_name == 'vehicles') & (AuditLog.record_id.in_(user_vehicle_ids_query))
+            )
+        )
         .order_by(AuditLog.created_at.desc())
         .limit(limit)
         .all()

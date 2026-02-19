@@ -23,7 +23,9 @@ export default function InputField({
     formState: { errors },
   } = useFormContext();
 
-  const error = errors[name];
+  const formError = errors[name];
+  const hasError = rest.error !== undefined ? rest.error : !!formError;
+  const helperText = rest.helperText !== undefined ? rest.helperText : (formError?.message as string | undefined);
 
   return (
     <Controller
@@ -37,8 +39,8 @@ export default function InputField({
           type={type}
           required={required}
           fullWidth={fullWidth}
-          error={!!error}
-          helperText={error?.message as string | undefined}
+          error={hasError}
+          helperText={helperText}
           onFocus={(e) => {
             if (type === 'number' && field.value === 0) {
               field.onChange('');

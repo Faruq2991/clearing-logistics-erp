@@ -4,7 +4,7 @@ import { useActivities } from '../hooks/useActivities';
 import ErrorAlert from './ErrorAlert';
 
 const RecentActivity: React.FC = () => {
-  const { data, isLoading, error } = useActivities();
+  const { data, isLoading, error } = useActivities(5);
 
   return (
     <Card elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 2 }}>
