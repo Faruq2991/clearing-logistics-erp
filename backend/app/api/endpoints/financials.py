@@ -92,6 +92,32 @@ def list_vehicle_payments(
 
 # --- Financials-level endpoints (admin/staff list) ---
 
+from datetime import datetime
+from app.schemas.financials import (
+    FinancialsCreate,
+    FinancialsUpdate,
+    FinancialsWithBalanceResponse,
+    PaymentCreate,
+    PaymentResponse,
+    FinancialsReport,
+)
+
+...
+
+@router.get("/report", response_model=FinancialsReport)
+def get_financials_report(
+    start_date: datetime,
+    end_date: datetime,
+    vehicle_id: Optional[int] = Query(None, description="Filter by vehicle ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(check_admin_privilege),
+):
+    """
+    Generate a financial report for a given period.
+    """
+    return financial_service.get_financial_report(db, start_date, end_date, current_user, vehicle_id)
+
+
 @router.get("/", response_model=List[FinancialsWithBalanceResponse])
 def list_financials(
     skip: int = 0,

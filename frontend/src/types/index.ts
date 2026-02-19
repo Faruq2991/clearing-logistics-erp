@@ -129,3 +129,24 @@ export interface DashboardStats {
     pending_documents_trend: number;
     total_outstanding_debt_trend: number;
 }
+export interface FinancialsReportItem {
+    vehicle_id: number;
+    vin: string;
+    make: string;
+    model: string;
+    year: number;
+    total_cost: number;
+    amount_paid: number;
+    balance: number;
+}
+
+export interface FinancialsReport {
+    start_date: string;
+    end_date: string;
+    total_vehicles: number;
+    total_revenue: number;
+    total_expenses: number;
+    net_profit: number;
+    items: FinancialsReportItem[];
+}
+

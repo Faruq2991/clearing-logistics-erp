@@ -22,10 +22,12 @@ import {
   Preview as PreviewIcon,
   Delete as DeleteIcon,
   Description as DescriptionIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import { useDocuments, useUploadDocument, useDeleteDocument } from '../hooks/useDocuments';
 import { documentsApi } from '../services/api';
 import type { DocumentType } from '../types';
+import VersionHistory from './VersionHistory';
 
 interface DocumentsTabProps {
   vehicleId: number;
@@ -38,6 +40,18 @@ export default function DocumentsTab({ vehicleId }: DocumentsTabProps) {
 
   const [file, setFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState<DocumentType>('bol');
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
+
+  const handleOpenHistory = (documentId: number) => {
+    setSelectedDocId(documentId);
+    setHistoryOpen(true);
+  };
+
+  const handleCloseHistory = () => {
+    setHistoryOpen(false);
+    setSelectedDocId(null);
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -73,7 +87,6 @@ export default function DocumentsTab({ vehicleId }: DocumentsTabProps) {
         console.error('Download failed:', error);
     }
   };
-
 
   if (isLoading) {
     return <CircularProgress />;
@@ -116,6 +129,9 @@ export default function DocumentsTab({ vehicleId }: DocumentsTabProps) {
             {uploadMutation.isPending ? <CircularProgress size={24} /> : 'Upload'}
           </Button>
         </Box>
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+            Uploading a document of the same type will create a new version.
+        </Typography>
         {uploadMutation.isError && (
           <Alert severity="error" sx={{ mt: 2 }}>
             {(uploadMutation.error as Error).message}
@@ -131,6 +147,9 @@ export default function DocumentsTab({ vehicleId }: DocumentsTabProps) {
               key={doc.id}
               secondaryAction={
                 <Box>
+                  <IconButton onClick={() => handleOpenHistory(doc.id)}>
+                    <HistoryIcon />
+                  </IconButton>
                   <IconButton href={documentsApi.getPreviewUrl(doc.id)} target="_blank" rel="noopener noreferrer">
                     <PreviewIcon />
                   </IconButton>
@@ -156,6 +175,11 @@ export default function DocumentsTab({ vehicleId }: DocumentsTabProps) {
       ) : (
         <Typography color="text.secondary">No documents uploaded yet.</Typography>
       )}
+      <VersionHistory
+        open={historyOpen}
+        onClose={handleCloseHistory}
+        documentId={selectedDocId}
+      />
     </Box>
   );
 }

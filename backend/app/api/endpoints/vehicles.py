@@ -43,12 +43,12 @@ def get_vehicle(vehicle_id: int, db: Session = Depends(get_db), current_user: Us
 # UPDATE: Full update (for correcting mistakes in VIN, Year, etc.)
 @router.put("/{vehicle_id}", response_model=VehicleResponse)
 def update_vehicle(vehicle_id: int, vehicle_update: VehicleCreate, db: Session = Depends(get_db), current_user: User = Depends(check_staff_privilege)):
-    return vehicle_service.update_existing_vehicle(db, vehicle_id, vehicle_update)
+    return vehicle_service.update_existing_vehicle(db, vehicle_id, vehicle_update, current_user)
 
 # DELETE: Remove a vehicle record
 @router.delete("/{vehicle_id}")
 def delete_vehicle(vehicle_id: int, db: Session = Depends(get_db), current_user: User = Depends(check_admin_privilege)):
-    return vehicle_service.delete_vehicle_record(db, vehicle_id)
+    return vehicle_service.delete_vehicle_record(db, vehicle_id, current_user)
 
 # UPDATE: Change status (In Transit -> Clearing -> Done)
 @router.patch("/{vehicle_id}/status", response_model=VehicleResponse)

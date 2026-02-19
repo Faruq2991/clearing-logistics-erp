@@ -4,6 +4,8 @@ This document outlines the plan for implementing features that are currently mis
 
 ## 1. Complete Audit Trail
 
+**Status: Implemented**
+
 **Goal:** Ensure all changes (updates, deletes) to vehicle records are logged in the `audit_logs` table.
 
 **Current Status:** Only vehicle creation is being logged.
@@ -32,6 +34,8 @@ This document outlines the plan for implementing features that are currently mis
 
 ## 2. Enhanced Cost Estimator
 
+**Status: Implemented**
+
 **Goal:** Add "Terminal Analysis" to the "Smart Cost Estimator". This feature will provide more accurate estimates by considering costs associated with specific terminals.
 
 **Files to Modify:**
@@ -55,6 +59,8 @@ This document outlines the plan for implementing features that are currently mis
     *   **Display Results:** In `frontend/src/components/EstimateDisplay.tsx`, update the component to display the terminal-specific cost breakdown.
 
 ## 3. Advanced Financial Reporting
+
+**Status: Implemented**
 
 **Goal:** Implement advanced, filterable financial reports for administrators.
 
@@ -81,6 +87,8 @@ This document outlines the plan for implementing features that are currently mis
     *   **Display Component:** Create a `FinancialReport.tsx` component to display the data in a clear and understandable format, using tables and possibly charts.
 
 ## 4. Document Versioning
+
+**Status: Implemented**
 
 **Goal:** Allow users to upload new versions of documents while retaining access to the old versions.
 

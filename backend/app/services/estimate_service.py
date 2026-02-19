@@ -3,7 +3,7 @@ from decouple import config
 from app.models.main import Vehicle, Financials
 from typing import Dict, Any, List, Optional
 
-def get_clearing_cost_estimate(db: Session, make: str, model: str, year: int) -> Optional[Dict[str, Any]]:
+def get_clearing_cost_estimate(db: Session, make: str, model: str, year: int, terminal: Optional[str] = None) -> Optional[Dict[str, Any]]:
     
     def calculate_average(query_result):
         if not query_result:
@@ -25,13 +25,24 @@ def get_clearing_cost_estimate(db: Session, make: str, model: str, year: int) ->
         avg_cost = sum(adjusted_costs) / len(adjusted_costs)
         return avg_cost, len(adjusted_costs)
 
-    search_hierarchy = [
-        ("exact", db.query(Financials).join(Vehicle).filter(Vehicle.make == make, Vehicle.model == model, Vehicle.year == year)),
-        ("make_and_model", db.query(Financials).join(Vehicle).filter(Vehicle.make == make, Vehicle.model == model)),
-        ("make_and_year", db.query(Financials).join(Vehicle).filter(Vehicle.make == make, Vehicle.year == year)),
-        ("make_only", db.query(Financials).join(Vehicle).filter(Vehicle.make == make)),
-        ("year_only", db.query(Financials).join(Vehicle).filter(Vehicle.year == year)),
-    ]
+    search_hierarchy = []
+    base_query = db.query(Financials).join(Vehicle)
+
+    if terminal:
+        search_hierarchy.extend([
+            ("exact_with_terminal", base_query.filter(Vehicle.make == make, Vehicle.model == model, Vehicle.year == year, Vehicle.terminal == terminal)),
+            ("make_model_with_terminal", base_query.filter(Vehicle.make == make, Vehicle.model == model, Vehicle.terminal == terminal)),
+            ("make_year_with_terminal", base_query.filter(Vehicle.make == make, Vehicle.year == year, Vehicle.terminal == terminal)),
+            ("make_with_terminal", base_query.filter(Vehicle.make == make, Vehicle.terminal == terminal)),
+        ])
+
+    search_hierarchy.extend([
+        ("exact", base_query.filter(Vehicle.make == make, Vehicle.model == model, Vehicle.year == year)),
+        ("make_and_model", base_query.filter(Vehicle.make == make, Vehicle.model == model)),
+        ("make_and_year", base_query.filter(Vehicle.make == make, Vehicle.year == year)),
+        ("make_only", base_query.filter(Vehicle.make == make)),
+        ("year_only", base_query.filter(Vehicle.year == year)),
+    ])
 
     for match_type, query in search_hierarchy:
         result = query.all()

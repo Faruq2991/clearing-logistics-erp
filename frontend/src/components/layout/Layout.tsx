@@ -23,17 +23,12 @@ import {
   DirectionsCar as CarIcon,
   Logout as LogoutIcon,
   GroupAdd as GroupAddIcon,
-  AttachMoney as AttachMoneyIcon, // Import AttachMoneyIcon
+  AttachMoney as AttachMoneyIcon,
+  Assessment as AssessmentIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
 const drawerWidth = 240;
-
-const navItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'Vehicles', icon: <CarIcon />, path: '/vehicles' },
-  { text: 'Financials', icon: <AttachMoneyIcon />, path: '/financials' },
-];
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -46,6 +41,16 @@ export default function Layout() {
   const handleDrawerClose = () => {
     setOpen(false);
   };
+
+  const navItems = [
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+    { text: 'Vehicles', icon: <CarIcon />, path: '/vehicles' },
+    { text: 'Financials', icon: <AttachMoneyIcon />, path: '/financials' },
+  ];
+  
+  if (user?.role === 'admin') {
+    navItems.push({ text: 'Reports', icon: <AssessmentIcon />, path: '/financials/reports' });
+  }
 
   const drawer = (
     <div>

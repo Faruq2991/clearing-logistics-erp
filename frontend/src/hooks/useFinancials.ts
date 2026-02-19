@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { financialsApi } from '../services/api';
 import { getErrorMessage } from '../services/errorHandler';
-import type { PaymentCreate, Financials, FinancialsCreate, FinancialsUpdate } from '../types';
+import type { PaymentCreate, Financials, FinancialsCreate, FinancialsUpdate, FinancialsReport } from '../types';
 import { AxiosError } from 'axios';
 
 export function useFinancials(vehicleId: number | null) {
@@ -79,3 +79,27 @@ export function useRecordPayment(vehicleId: number) {
     error: error ? getErrorMessage(error) : null,
   };
 }
+
+import type { FinancialsReport } from '../types';
+
+export function useFinancialReport(startDate: Date, endDate: Date, vehicleId?: number) {
+  const { data, isLoading, error, refetch } = useQuery<FinancialsReport | null>({
+    queryKey: ['financialsReport', startDate, endDate, vehicleId],
+    queryFn: async () => {
+      if (!startDate || !endDate) {
+        return null;
+      }
+      const params = {
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        vehicle_id: vehicleId,
+      };
+      const response = await financialsApi.getReport(params);
+      return response.data;
+    },
+    enabled: false, // only fetch when refetch is called
+  });
+
+  return { data, isLoading, error: error ? getErrorMessage(error) : null, refetch };
+}
+

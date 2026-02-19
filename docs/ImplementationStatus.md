@@ -6,7 +6,7 @@ This document summarizes how the core project functionalities (auth, documents, 
 
 ## 1. Auth — Implemented
 
-**Location:** `backend/app/api/endpoints/auth.py`  
+**Location:** `backend/app/api/endpoints/auth.py`
 **Security:** `backend/app/core/auth_utils.py`, `backend/app/core/security.py`
 
 | Endpoint | Method | Status |
@@ -26,7 +26,7 @@ This document summarizes how the core project functionalities (auth, documents, 
 
 ## 2. Documents — Implemented
 
-**Location:** `backend/app/api/endpoints/documents.py`  
+**Location:** `backend/app/api/endpoints/documents.py`
 **Storage:** `backend/app/core/storage.py` (Cloudinary + local fallback)
 
 | Endpoint | Method | Status |
@@ -34,6 +34,7 @@ This document summarizes how the core project functionalities (auth, documents, 
 | `GET /api/vehicles/{vehicle_id}/documents` | GET | List documents for vehicle |
 | `POST /api/vehicles/{vehicle_id}/documents` | POST | Upload document (form: document_type, file) |
 | `GET /api/documents/{document_id}` | GET | Get document metadata |
+| `GET /api/documents/{document_id}/versions` | GET | Get all versions of a document |
 | `GET /api/documents/{document_id}/preview` | GET | Preview document (redirect/serve) |
 | `GET /api/documents/{document_id}/download` | GET | Download document |
 | `DELETE /api/documents/{document_id}` | DELETE | Delete document |
@@ -44,6 +45,7 @@ This document summarizes how the core project functionalities (auth, documents, 
 - Allowed: PDF, JPEG, PNG. Max 10MB
 - Storage: Cloudinary when `CLOUDINARY_URL` set; local `uploads/` otherwise
 - RBAC: STAFF/ADMIN full access; GUEST only their vehicles
+- **Versioning:** Uploading a document of the same type for a vehicle creates a new version. The previous version is retained and can be accessed via the versioning API.
 
 ---
 
@@ -56,17 +58,18 @@ This document summarizes how the core project functionalities (auth, documents, 
 | `/api/estimate/global-search` | GET | Implemented |
 
 **Features:**
-- Query params: `make`, `model`, `year`
-- Joins `Vehicle` and `Financials` for historical data
-- Exchange rate normalization: uses `exchange_rate_at_clearing` and `CUSTOMS_EXCHANGE_RATE` when available
-- Returns average clearing cost, sample size, and normalization status
-- Requires auth via `get_current_user`
+- Query params: `make`, `model`, `year`, and optional `terminal`.
+- **Terminal Analysis:** Prioritizes estimates based on historical data for the specified terminal.
+- Joins `Vehicle` and `Financials` for historical data.
+- Exchange rate normalization: uses `exchange_rate_at_clearing` and `CUSTOMS_EXCHANGE_RATE` when available.
+- Returns average clearing cost, sample size, and normalization status.
+- Requires auth via `get_current_user`.
 
 ---
 
 ## 4. Financials — Implemented
 
-**Location:** `backend/app/api/endpoints/financials.py`  
+**Location:** `backend/app/api/endpoints/financials.py`
 **Audit:** `backend/app/core/auditing.py`
 
 | Endpoint | Method | Status |
@@ -77,12 +80,14 @@ This document summarizes how the core project functionalities (auth, documents, 
 | `POST /api/vehicles/{vehicle_id}/financials/payments` | POST | Record payment (installment) |
 | `GET /api/vehicles/{vehicle_id}/financials/payments` | GET | List payments for vehicle |
 | `GET /api/financials` | GET | List all financials (admin/staff, paginated, filter by vehicle_id) |
+| `GET /api/financials/report` | GET | Generate a financial report (admin only) |
 
 **Features:**
-- One Financials record per vehicle (unique vehicle_id; returns 400 if duplicate)
-- Payment model for installments; AuditLog for create/update/payment
-- Balance = total_cost − amount_paid (allows overpayment for refunds/credits)
-- RBAC: STAFF/ADMIN full access; GUEST read-only for their vehicles
+- One Financials record per vehicle (unique vehicle_id; returns 400 if duplicate).
+- Payment model for installments; AuditLog for create/update/payment.
+- Balance = total_cost − amount_paid (allows overpayment for refunds/credits).
+- RBAC: STAFF/ADMIN full access; GUEST read-only for their vehicles.
+- **Financial Reporting:** Admins can generate financial reports for a given date range.
 
 ---
 
@@ -100,10 +105,11 @@ This document summarizes how the core project functionalities (auth, documents, 
 | `/api/vehicles/{id}/status` | PATCH | Update status |
 
 **Features:**
-- Full CRUD with DB and Pydantic schemas
-- Role-based access: ADMIN/STAFF see all; GUEST only their own (`owner_id`)
-- VIN uniqueness check
-- Vehicle attributes: VIN, make, model, year, color, ship_name, terminal, arrival_date, status, owner_id
+- Full CRUD with DB and Pydantic schemas.
+- Role-based access: ADMIN/STAFF see all; GUEST only their own (`owner_id`).
+- VIN uniqueness check.
+- Vehicle attributes: VIN, make, model, year, color, ship_name, terminal, arrival_date, status, owner_id.
+- **Complete Audit Trail:** All vehicle creations, updates, and deletions are logged.
 
 ---
 
@@ -112,10 +118,10 @@ This document summarizes how the core project functionalities (auth, documents, 
 | Module | Implementation Level | Notes |
 |--------|----------------------|-------|
 | **Auth** | Complete | Login, register, JWT, RBAC |
-| **Documents** | Complete | Upload, list, preview, download, delete; Cloudinary/local storage |
-| **Estimates** | Complete | Global search; exchange rate normalization |
-| **Financials** | Complete | CRUD, payments, audit, balance; RBAC |
-| **Vehicles** | Complete | Full CRUD, RBAC, status workflow |
+| **Documents** | Complete | Upload, list, preview, download, delete; Cloudinary/local storage; **Versioning** |
+| **Estimates** | Complete | Global search; exchange rate normalization; **Terminal Analysis** |
+| **Financials** | Complete | CRUD, payments, audit, balance; RBAC; **Reporting** |
+| **Vehicles** | Complete | Full CRUD, RBAC, status workflow; **Complete Audit Trail** |
 
 ---
 
@@ -129,6 +135,4 @@ This document summarizes how the core project functionalities (auth, documents, 
 
 ## Recommended Next Steps
 
-1. **Documents Phase 2:** Add versioning logic (replace document → set replaced_by_id, increment version).
-2. **Financials Phase 3:** Add `GET /api/financials/summary` with monthly filters and basic reporting.
-3. **OAuth2 tokenUrl:** In `security.py`, ensure `tokenUrl` matches the login endpoint (e.g., `tokenUrl="/api/auth/login"`) for correct OpenAPI/Swagger auth flow.
+1. **OAuth2 tokenUrl:** In `security.py`, ensure `tokenUrl` matches the login endpoint (e.g., `tokenUrl="/api/auth/login"`) for correct OpenAPI/Swagger auth flow.

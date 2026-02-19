@@ -17,6 +17,7 @@ def search_estimate(
     make: str,
     model: str,
     year: int,
+    terminal: str = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -25,7 +26,7 @@ def search_estimate(
     Fetches matching records (Make, Model, Year), adjusts Naira costs to current market
     using exchange_rate_at_clearing vs CUSTOMS_EXCHANGE_RATE, returns weighted average.
     """
-    result = estimate_service.get_clearing_cost_estimate(db, make, model, year)
+    result = estimate_service.get_clearing_cost_estimate(db, make, model, year, terminal)
     if result is None:
         raise HTTPException(status_code=404, detail="No historical data found for this model and year.")
     return result

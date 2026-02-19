@@ -81,24 +81,48 @@ def get_vehicle_by_id(db: Session, vehicle_id: int, current_user: User) -> Vehic
     
     return db_vehicle
 
-def update_existing_vehicle(db: Session, vehicle_id: int, vehicle_update_data: VehicleCreate) -> Vehicle:
+def update_existing_vehicle(db: Session, vehicle_id: int, vehicle_update_data: VehicleCreate, current_user: User) -> Vehicle:
     db_vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
     if not db_vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
-    
-    # Update fields dynamically
-    for key, value in vehicle_update_data.model_dump().items():
+
+    # Capture old state as a dictionary
+    old_vehicle_data = {c.name: getattr(db_vehicle, c.name) for c in db_vehicle.__table__.columns}
+
+    update_data = vehicle_update_data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
         setattr(db_vehicle, key, value)
+    
+    log_action(
+        db=db,
+        user_id=current_user.id,
+        action="update",
+        table_name="vehicles",
+        record_id=db_vehicle.id,
+        old_value=old_vehicle_data,
+        new_value=update_data,
+    )
     
     db.commit()
     db.refresh(db_vehicle)
     return db_vehicle
 
-def delete_vehicle_record(db: Session, vehicle_id: int):
+def delete_vehicle_record(db: Session, vehicle_id: int, current_user: User):
     db_vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
     if not db_vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
-    
+
+    old_vehicle_data = {c.name: getattr(db_vehicle, c.name) for c in db_vehicle.__table__.columns}
+
+    log_action(
+        db=db,
+        user_id=current_user.id,
+        action="delete",
+        table_name="vehicles",
+        record_id=db_vehicle.id,
+        old_value=old_vehicle_data
+    )
+
     db.delete(db_vehicle)
     db.commit()
     return {"message": f"Vehicle with ID {vehicle_id} successfully deleted"}

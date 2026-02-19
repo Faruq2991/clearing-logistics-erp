@@ -40,3 +40,15 @@ export function useDeleteDocument() {
     },
   });
 }
+
+export function useDocumentVersions(documentId: number) {
+  return useQuery<DocumentResponse[]>({
+    queryKey: ['documentVersions', documentId],
+    queryFn: async () => {
+      const { data } = await documentsApi.getVersions(documentId);
+      return data;
+    },
+    enabled: !!documentId,
+  });
+}
+

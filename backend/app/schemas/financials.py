@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -45,5 +45,30 @@ class PaymentResponse(BaseModel):
     recorded_by_id: Optional[int] = None
     created_at: Optional[datetime] = None
     notes: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FinancialsReportItem(BaseModel):
+    vehicle_id: int
+    vin: str
+    make: str
+    model: str
+    year: int
+    total_cost: float
+    amount_paid: float
+    balance: float
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FinancialsReport(BaseModel):
+    start_date: datetime
+    end_date: datetime
+    total_vehicles: int
+    total_revenue: float
+    total_expenses: float
+    net_profit: float
+    items: List[FinancialsReportItem]
 
     model_config = ConfigDict(from_attributes=True)

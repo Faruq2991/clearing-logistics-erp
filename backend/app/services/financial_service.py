@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from typing import List, Optional, Dict, Any
@@ -10,7 +11,7 @@ from app.schemas.financials import (
     FinancialsResponse,
     FinancialsWithBalanceResponse,
     PaymentCreate,
-    PaymentResponse,
+    PaymentResponse, FinancialsReport, FinancialsReportItem,
 )
 from app.core.auditing import log_action
 
@@ -136,3 +137,56 @@ def list_financial_records(
         query = query.filter(Financials.vehicle_id == vehicle_id)
     financials_list = query.offset(skip).limit(limit).all()
     return [_financials_with_balance(f) for f in financials_list]
+
+from datetime import datetime
+from app.schemas.financials import FinancialsReport, FinancialsReportItem
+
+def get_financial_report(db: Session, start_date: datetime, end_date: datetime, current_user: User, vehicle_id: Optional[int] = None) -> FinancialsReport:
+    """
+    Generates a financial report for a given period.
+    """
+    query = db.query(Financials).join(Vehicle).filter(
+        Financials.created_at >= start_date,
+        Financials.created_at <= end_date,
+    )
+
+    if current_user.role != UserRole.ADMIN:
+        query = query.filter(Vehicle.owner_id == current_user.id)
+
+    if vehicle_id:
+        query = query.filter(Vehicle.id == vehicle_id)
+
+    financials_list = query.all()
+
+    items = []
+    total_revenue = 0.0
+    total_expenses = 0.0
+
+    for financials in financials_list:
+        balance = financials.total_cost - financials.amount_paid
+        item = FinancialsReportItem(
+            vehicle_id=financials.vehicle.id,
+            vin=financials.vehicle.vin,
+            make=financials.vehicle.make,
+            model=financials.vehicle.model,
+            year=financials.vehicle.year,
+            total_cost=financials.total_cost,
+            amount_paid=financials.amount_paid,
+            balance=balance,
+        )
+        items.append(item)
+        total_revenue += financials.amount_paid
+        total_expenses += financials.total_cost
+
+    net_profit = total_revenue - total_expenses
+
+    return FinancialsReport(
+        start_date=start_date,
+        end_date=end_date,
+        total_vehicles=len(items),
+        total_revenue=total_revenue,
+        total_expenses=total_expenses,
+        net_profit=net_profit,
+        items=items,
+    )
+

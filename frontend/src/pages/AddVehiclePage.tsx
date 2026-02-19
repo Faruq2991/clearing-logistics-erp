@@ -224,7 +224,8 @@ function StepContent({ step, vin, setVin, vinAvailable }: { step: number, vin: s
   const make = watch('make');
   const model = watch('model');
   const year = watch('year');
-  const { data: estimateData } = useEstimate(make, model, year);
+  const terminal = watch('terminal');
+  const { data: estimateData } = useEstimate(make, model, year, terminal);
 
   if (estimateData?.average_clearing_cost) {
       setValue('estimated_total_cost', estimateData.average_clearing_cost);

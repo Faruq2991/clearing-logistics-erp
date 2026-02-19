@@ -68,6 +68,7 @@ export const documentsApi = {
   download: (documentId: number) =>
     api.get(`/documents/${documentId}/download`, { responseType: 'blob' }),
   delete: (documentId: number) => api.delete(`/documents/${documentId}`),
+  getVersions: (documentId: number) => api.get(`/documents/${documentId}/versions`),
 };
 
 // Financials (vehicle-scoped)
@@ -81,12 +82,14 @@ export const financialsApi = {
     api.get(`/vehicles/${vehicleId}/financials/payments`),
   recordPayment: (vehicleId: number, data: PaymentCreate) =>
     api.post(`/vehicles/${vehicleId}/financials/payments`, data),
+  getReport: (params: { start_date: string; end_date: string; vehicle_id?: number }) =>
+    api.get('/financials/report', { params }),
 };
 
 // Estimate
 export const estimateApi = {
-  search: (make: string, model: string, year: number) =>
-    api.get('/estimate/global-search', { params: { make, model, year } }),
+  search: (make: string, model: string, year: number, terminal?: string) =>
+    api.get('/estimate/global-search', { params: { make, model, year, terminal } }),
   calculateCostOfRunning: (data: {
     vehicle_cost: number;
     shipping_fees: number;

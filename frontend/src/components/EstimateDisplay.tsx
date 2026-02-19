@@ -31,12 +31,14 @@ export default function EstimateDisplay() {
   const make = watch('make');
   const model = watch('model');
   const year = watch('year');
+  const terminal = watch('terminal');
 
   const debouncedMake = useDebounce(make, 500);
   const debouncedModel = useDebounce(model, 500);
   const debouncedYear = useDebounce(year, 500);
+  const debouncedTerminal = useDebounce(terminal, 500);
 
-  const { data, isLoading, error } = useEstimate(debouncedMake, debouncedModel, debouncedYear);
+  const { data, isLoading, error } = useEstimate(debouncedMake, debouncedModel, debouncedYear, debouncedTerminal);
 
   const shouldShow = make && model && year;
 

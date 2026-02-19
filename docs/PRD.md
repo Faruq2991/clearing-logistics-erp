@@ -8,7 +8,7 @@
 | Field | Value |
 |-------|-------|
 | **Project Name** | Clearing & Logistics Management System |
-| **Status** | Draft / Specification Phase |
+| **Status** | In Development / V1 Implemented |
 | **Author** | Gemini (AI Thought Partner) |
 | **Stakeholder** | System Owner / Lead Developer |
 | **Last Updated** | January 2026 |
@@ -72,7 +72,7 @@ Each vehicle record must support multiple file uploads.
 **Requirements:**
 - Users must be able to preview documents within the browser without downloading
 - Secure cloud storage with access controls
-- Version tracking for updated documents
+- Version tracking for updated documents (Implemented)
 
 ### 3.3 Smart Cost Estimator
 
@@ -81,7 +81,7 @@ The system must provide a "Rough Estimate" for clearing a vehicle during the "Ne
 **Logic Requirements:**
 - The estimate must be filtered by Make, Model, AND Year
 - Dynamic Factors: Logic must account for the current Customs Exchange Rate compared to the historical rate stored in the record
-- Terminal Analysis: The system should show cost variances between different terminals (e.g., PTML vs. Five Star)
+- Terminal Analysis: The system should show cost variances between different terminals (e.g., PTML vs. Five Star) (Implemented)
 
 **Priority Hierarchy:**
 1. Vehicle Year (primary cost driver)
@@ -99,7 +99,7 @@ The system must provide a "Rough Estimate" for clearing a vehicle during the "Ne
 **Financial Reporting:**
 - Track total billed vs. total spent per vehicle
 - Calculate profit margins
-- Generate monthly financial summaries
+- Generate monthly financial summaries (Implemented via admin-only reporting page)
 
 ---
 
@@ -163,7 +163,7 @@ The system must provide a "Rough Estimate" for clearing a vehicle during the "Ne
 
 **Audit Logs**
 - Every financial change (payment recorded) must be timestamped with the user who performed it
-- Track all CRUD operations on vehicle records
+- Track all CRUD operations on vehicle records (Implemented)
 - Maintain immutable audit trail
 
 **Year-Based Logic**

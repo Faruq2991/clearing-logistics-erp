@@ -100,6 +100,19 @@ def download_document(
     return document_service.download_document_content(db, document_id, current_user)
 
 
+@router.get("/{document_id}/versions", response_model=List[DocumentResponse])
+def get_document_versions_endpoint(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get all versions of a document.
+    """
+    versions = document_service.get_document_versions(db, document_id, current_user)
+    return versions
+
+
 @router.delete("/{document_id}")
 def delete_document(
     document_id: int,

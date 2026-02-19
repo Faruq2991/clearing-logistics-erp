@@ -133,3 +133,19 @@ def serve_local_document_file(db: Session, filename: str, user: User) -> FileRes
         raise HTTPException(status_code=404, detail="File not found on server")
 
     return FileResponse(file_path, media_type=document.mime_type)
+
+def get_document_versions(db: Session, document_id: int, user: User) -> List[Document]:
+    """
+    Retrieves all versions of a document, sorted from newest to oldest.
+    """
+    # First, get the document and verify access.
+    doc = _get_document_with_access(db, document_id, user)
+
+    # Then, query for all documents of the same type for that vehicle.
+    versions = db.query(Document).filter(
+        Document.vehicle_id == doc.vehicle_id,
+        Document.document_type == doc.document_type
+    ).order_by(Document.version.desc()).all()
+    
+    return versions
+
