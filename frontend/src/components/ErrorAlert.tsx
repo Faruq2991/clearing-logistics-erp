@@ -1,21 +1,20 @@
 import { Alert, AlertTitle } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
 
 interface ErrorAlertProps {
-  error: unknown;
+  error: string | Error | null;
+  sx?: SxProps<Theme>;
 }
 
-export default function ErrorAlert({ error }: ErrorAlertProps) {
-  if (!error) {
-    return null;
-  }
-
-  // At this point, the error message is already formatted by getErrorMessage in the hook
-  const message = error as string;
-
+export default function ErrorAlert({ error, sx }: ErrorAlertProps) {
+  if (!error) return null;
+  
+  const errorMessage = typeof error === 'string' ? error : error.message;
+  
   return (
-    <Alert severity="error" sx={{ mb: 2 }}>
+    <Alert severity="error" sx={sx}>
       <AlertTitle>Error</AlertTitle>
-      {message}
+      {errorMessage}
     </Alert>
   );
 }

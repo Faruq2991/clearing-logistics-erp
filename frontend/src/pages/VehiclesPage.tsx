@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Box, Button, Typography, Chip, TextField, Select, MenuItem, FormControl, InputLabel, Grid } from '@mui/material';
+import { Box, Button, Typography, Chip, TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { DataGrid, type GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { Add as AddIcon, Visibility as ViewIcon } from '@mui/icons-material';
 import { useVehicles } from '../hooks/useVehicles';
@@ -65,7 +66,7 @@ export default function VehiclesPage() {
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 500); // 500ms debounce delay
+    }, 500);
 
     return () => {
       clearTimeout(timerId);
@@ -106,7 +107,7 @@ export default function VehiclesPage() {
       </Box>
 
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={5}>  {/* Search */}
+        <Grid size={{ xs: 12, sm: 5 }}>
           <TextField
             fullWidth
             variant="outlined"
@@ -115,7 +116,7 @@ export default function VehiclesPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </Grid>
-        <Grid item xs={12} sm={5}>  {/* Status */}
+        <Grid size={{ xs: 12, sm: 5 }}>
           <FormControl fullWidth>
             <InputLabel id="status-filter-label">Status</InputLabel>
             <Select
@@ -125,17 +126,16 @@ export default function VehiclesPage() {
               label="Status"
               onChange={(e) => setStatus(e.target.value)}
             >
-              <MenuItem value="ALL"> All</MenuItem>
-              
+              <MenuItem value="ALL">All</MenuItem>
               <MenuItem value="In Transit">In Transit</MenuItem>
               <MenuItem value="Clearing">Clearing</MenuItem>
               <MenuItem value="Done">Done</MenuItem>
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} sm={2}>  {/* Clear button */}
-          <Button 
-            variant="outlined" 
+        <Grid size={{ xs: 12, sm: 2 }}>
+          <Button
+            variant="outlined"
             onClick={handleClear}
             fullWidth
             sx={{ height: '56px' }}
@@ -154,7 +154,7 @@ export default function VehiclesPage() {
           loading={isLoading}
           pagination
           paginationMode="server"
-          rowCount={-1} // Indicates server-side pagination with unknown total count
+          rowCount={-1}
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
           pageSizeOptions={[5, 10, 20]}

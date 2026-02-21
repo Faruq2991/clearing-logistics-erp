@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { financialsApi } from '../services/api';
 import { getErrorMessage } from '../services/errorHandler';
-import type { PaymentCreate, Financials, FinancialsCreate, FinancialsUpdate, FinancialsReport } from '../types';
+import type { PaymentCreate, FinancialsCreate, FinancialsUpdate, FinancialsReport } from '../types';
 import { AxiosError } from 'axios';
 
 export function useFinancials(vehicleId: number | null) {
-  const { data, isLoading, error, isSuccess } = useQuery<Financials | null>({
+  const { data, isLoading, error, isSuccess } = useQuery<any | null>({
     queryKey: ['financials', vehicleId],
     queryFn: async () => {
       try {
@@ -80,7 +80,7 @@ export function useRecordPayment(vehicleId: number) {
   };
 }
 
-import type { FinancialsReport } from '../types';
+
 
 export function useFinancialReport(startDate: Date, endDate: Date, vehicleId?: number) {
   const { data, isLoading, error, refetch } = useQuery<FinancialsReport | null>({

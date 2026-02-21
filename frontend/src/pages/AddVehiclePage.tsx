@@ -203,22 +203,26 @@ function CostOfRunningStep() {
     const vehicleYear = watch('year');
     return (
         <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}><InputField name="agencies" label="Agencies" type="number" /></Grid>
-            <Grid item xs={12} sm={6}><InputField name="examination" label="Examination" type="number" /></Grid>
-            <Grid item xs={12} sm={6}><InputField name="release" label="Release" type="number" /></Grid>
-            <Grid item xs={12} sm={6}><InputField name="disc" label="Disc" type="number" /></Grid>
-            <Grid item xs={12} sm={6}><InputField name="gate" label="Gate" type="number" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><InputField name="agencies" label="Agencies" type="number" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><InputField name="examination" label="Examination" type="number" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><InputField name="release" label="Release" type="number" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><InputField name="disc" label="Disc" type="number" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><InputField name="gate" label="Gate" type="number" /></Grid>
             {vehicleYear && vehicleYear >= 2017 && (
                 <>
-                    <Grid item xs={12} sm={6}><InputField name="ciu" label="CIU" type="number" /></Grid>
-                    <Grid item xs={12} sm={6}><InputField name="monitoring" label="Monitoring" type="number" /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}><InputField name="ciu" label="CIU" type="number" /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}><InputField name="monitoring" label="Monitoring" type="number" /></Grid>
                 </>
             )}
         </Grid>
     );
 }
 
-function StepContent({ step, vin, setVin, vinAvailable }: { step: number, vin: string, setVin: (vin: string) => void, vinAvailable: boolean | null }) {
+function StepContent({ step, setVin, vinAvailable }: { 
+  step: number, 
+  setVin: (vin: string) => void, 
+  vinAvailable: boolean | null 
+}) {
   const { watch, setValue } = useFormContext<VehicleFormInputs>();
   const clearanceType = watch('clearance_type');
   const make = watch('make');
@@ -235,7 +239,7 @@ function StepContent({ step, vin, setVin, vinAvailable }: { step: number, vin: s
     case 0: return <ClearanceTypeStep />;
     case 1: return (
         <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid size={12}>
                 <InputField 
                     name="vin" 
                     label="VIN" 
@@ -243,23 +247,23 @@ function StepContent({ step, vin, setVin, vinAvailable }: { step: number, vin: s
                     inputProps={{ 
                         style: { textTransform: 'uppercase' }, 
                         maxLength: 17,
-                        onChange: (e) => setVin(e.target.value)
+                        onChange: (e: React.ChangeEvent<HTMLInputElement>) => setVin(e.target.value)
                     }} 
                     helperText={vinAvailable === false ? "VIN already registered" : "17 characters"}
                     error={vinAvailable === false}
                 />
             </Grid>
-            <Grid item xs={12} sm={4}><VehicleMakeField /></Grid>
-            <Grid item xs={12} sm={4}><VehicleModelField /></Grid>
-            <Grid item xs={12} sm={4}><InputField name="year" label="Year" type="number" required /></Grid>
-            <Grid item xs={12}><InputField name="color" label="Color" /></Grid>
+            <Grid size={{ xs: 12, sm: 4 }}><VehicleMakeField /></Grid>
+            <Grid size={{ xs: 12, sm: 4 }}><VehicleModelField /></Grid>
+            <Grid size={{ xs: 12, sm: 4 }}><InputField name="year" label="Year" type="number" required /></Grid>
+            <Grid size={12}><InputField name="color" label="Color" /></Grid>
         </Grid>
     );
     case 2: return (
         <Grid container spacing={2}>
-            <Grid item xs={12}><Controller name="ship_name" render={({ field }) => ( <Autocomplete {...field} options={SHIP_NAMES} value={field.value || null} onChange={(_, newValue) => field.onChange(newValue || '')} renderInput={(params) => ( <TextField {...params} label="Ship Name" /> )} freeSolo /> )}/></Grid>
-            <Grid item xs={12}><SelectField name="terminal" label="Terminal"><MenuItem value=""><em>None</em></MenuItem>{TERMINALS.map((t) => ( <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem> ))}</SelectField></Grid>
-            <Grid item xs={12}><Controller name="arrival_date" render={({ field }) => ( <DatePicker label="Arrival Date" value={field.value || null} onChange={(date) => field.onChange(date)} slotProps={{ textField: { fullWidth: true } }} /> )}/></Grid>
+            <Grid size={12}><Controller name="ship_name" render={({ field }) => ( <Autocomplete {...field} options={SHIP_NAMES} value={field.value || null} onChange={(_, newValue) => field.onChange(newValue || '')} renderInput={(params) => ( <TextField {...params} label="Ship Name" /> )} freeSolo /> )}/></Grid>
+            <Grid size={12}><SelectField name="terminal" label="Terminal"><MenuItem value=""><em>None</em></MenuItem>{TERMINALS.map((t) => ( <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem> ))}</SelectField></Grid>
+            <Grid size={12}><Controller name="arrival_date" render={({ field }) => ( <DatePicker label="Arrival Date" value={field.value || null} onChange={(date) => field.onChange(date)} slotProps={{ textField: { fullWidth: true } }} /> )}/></Grid>
         </Grid>
     );
     case 3: return (
@@ -356,7 +360,7 @@ export default function AddVehiclePage() {
         <ErrorAlert error={createVehicle.error} />
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <Box sx={{ minHeight: 200, p: 2 }}><StepContent step={activeStep} vin={vin} setVin={setVin} vinAvailable={vinAvailable} /></Box>
+            <Box sx={{ minHeight: 200, p: 2 }}><StepContent step={activeStep} setVin={setVin} vinAvailable={vinAvailable} /></Box>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
                 <Button disabled={activeStep === 0} onClick={handleBack} sx={{ mr: 1 }}>Back</Button>
                 {activeStep === steps.length - 1 ? (

@@ -9,11 +9,11 @@ import {
   CardContent,
   CardHeader,
   CircularProgress,
-  Grid,
   TextField,
   Typography,
-  MenuItem
+  MenuItem,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { estimateApi } from '../services/api';
 import ErrorAlert from './ErrorAlert';
 import SelectField from './form/SelectField';
@@ -70,7 +70,7 @@ export default function CostOfRunningCalculator() {
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="vehicle_cost"
                   control={control}
@@ -87,7 +87,7 @@ export default function CostOfRunningCalculator() {
                   )}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="shipping_fees"
                   control={control}
@@ -104,7 +104,7 @@ export default function CostOfRunningCalculator() {
                   )}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="customs_duty"
                   control={control}
@@ -121,7 +121,7 @@ export default function CostOfRunningCalculator() {
                   )}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <SelectField
                   name="terminal"
                   label="Terminal"
@@ -133,7 +133,7 @@ export default function CostOfRunningCalculator() {
                   ))}
                 </SelectField>
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Button
                   type="submit"
                   variant="contained"

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Box, Button, Typography, Paper, Grid } from '@mui/material';
+import { Box, Button, Typography, Paper } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -24,21 +25,21 @@ export default function FinancialReportsPage() {
         <Typography variant="h6">Report Filters</Typography>
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <Grid container spacing={2} alignItems="center" sx={{ mt: 1 }}>
-            <Grid item>
+            <Grid size="auto">
               <DatePicker
                 label="Start Date"
                 value={startDate}
                 onChange={setStartDate}
               />
             </Grid>
-            <Grid item>
+            <Grid size="auto">
               <DatePicker
                 label="End Date"
                 value={endDate}
                 onChange={setEndDate}
               />
             </Grid>
-            <Grid item>
+            <Grid size="auto">
               <Button
                 variant="contained"
                 onClick={handleGenerateReport}

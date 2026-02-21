@@ -15,7 +15,6 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
   Dialog,
   DialogActions,
   DialogContent,
@@ -146,7 +145,7 @@ export default function VehicleDetailPage() {
       </Box>
 
       <Paper>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} indicatorColor="primary" textColor="primary" centered>
+        <Tabs value={tab} onChange={(_, v: any) => setTab(v)} indicatorColor="primary" textColor="primary" centered>
           <Tab icon={<InfoIcon />} label="Details" />
           <Tab icon={<DescriptionIcon />} label="Documents" />
           {user?.role === 'admin' && <Tab icon={<AttachMoneyIcon />} label="Financials" />}
@@ -155,7 +154,7 @@ export default function VehicleDetailPage() {
 
         <TabPanel value={tab} index={0}>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card>
                 <CardHeader title="Vehicle Information" />
                 <CardContent>
@@ -179,7 +178,7 @@ export default function VehicleDetailPage() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card>
                 <CardHeader title="Shipping & Status" />
                 <CardContent>
@@ -195,7 +194,7 @@ export default function VehicleDetailPage() {
                       <FormControl sx={{ ml: 1, minWidth: 120 }} size="small">
                         <Select
                           value={vehicle.status}
-                          onChange={(e) => handleStatusChange(e.target.value)}
+                          onChange={(e: any) => handleStatusChange(e.target.value)}
                           disabled={isUpdatingStatus}
                         >
                           <MenuItem value="In Transit">In Transit</MenuItem>
@@ -220,7 +219,7 @@ export default function VehicleDetailPage() {
         {user?.role === 'admin' && (
           <TabPanel value={tab} index={2}>
             {vehicleId && <FinancialsTab vehicleId={vehicleId} />}
-        </TabPanel>
+          </TabPanel>
         )}
       </Paper>
 

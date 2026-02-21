@@ -70,7 +70,7 @@ function App() {
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <CssBaseline />
           <AuthProvider>
-            <RouterProvider router={router} future={{ v7_startTransition: true, v7_relativeSplatPath: true }} />
+            <RouterProvider router={router} future={{ v7_startTransition: true }} />
           </AuthProvider>
         </LocalizationProvider>
       </ThemeProvider>

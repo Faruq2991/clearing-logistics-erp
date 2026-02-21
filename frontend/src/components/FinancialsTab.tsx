@@ -5,7 +5,6 @@ import {
   CardContent,
   CardHeader,
   CircularProgress,
-  Grid,
   Typography,
   Button,
   TextField,
@@ -14,6 +13,7 @@ import {
   ListItemText,
   IconButton,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { Edit as EditIcon, Save as SaveIcon } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -117,7 +117,7 @@ export default function FinancialsTab({ vehicleId }: FinancialsTabProps) {
 
   return (
     <Grid container spacing={3}>
-      <Grid item xs={12} md={6}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <Card>
           <CardHeader title="Financial Summary" />
           <CardContent>
@@ -155,7 +155,7 @@ export default function FinancialsTab({ vehicleId }: FinancialsTabProps) {
           <CardContent>
             <form onSubmit={handleSubmit(onPaymentSubmit)}>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Controller
                     name="amount"
                     control={control}
@@ -172,7 +172,7 @@ export default function FinancialsTab({ vehicleId }: FinancialsTabProps) {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Controller
                     name="payment_date"
                     control={control}
@@ -186,7 +186,7 @@ export default function FinancialsTab({ vehicleId }: FinancialsTabProps) {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Controller
                     name="reference"
                     control={control}
@@ -199,7 +199,7 @@ export default function FinancialsTab({ vehicleId }: FinancialsTabProps) {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Button
                     type="submit"
                     variant="contained"
@@ -214,7 +214,7 @@ export default function FinancialsTab({ vehicleId }: FinancialsTabProps) {
           </CardContent>
         </Card>
       </Grid>
-      <Grid item xs={12} md={6}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <Card>
           <CardHeader title="Payment History" />
           <CardContent>
@@ -252,4 +252,3 @@ function getErrorMessage(error: any): string {
     if (error.message) return error.message;
     return 'An unknown error occurred.';
 }
-

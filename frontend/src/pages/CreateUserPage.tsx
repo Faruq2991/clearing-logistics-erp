@@ -5,10 +5,10 @@ import {
   Button,
   Typography,
   Paper,
-  Grid,
   MenuItem,
 } from '@mui/material';
-import { useForm, type SubmitHandler } from 'react-hook-form'; // Changed to type-only import
+import Grid from '@mui/material/Grid';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Form from '../components/form/Form';
 import InputField from '../components/form/InputField';
@@ -28,7 +28,7 @@ export function useCreateUser() {
   return useMutation({
     mutationFn: (data: UserCreate) => api.post('/users', data),
     onSuccess: () => {
-      navigate('/users'); // Redirect to a user list page (to be created)
+      navigate('/users');
     },
   });
 }
@@ -47,7 +47,6 @@ export default function CreateUserPage() {
       role: 'staff',
     },
   });
-
 
   const onSubmit: SubmitHandler<UserFormInputs> = async (data) => {
     try {
@@ -72,13 +71,13 @@ export default function CreateUserPage() {
           methods={methods}
         >
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <InputField name="email" label="Email" required />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <InputField name="password" label="Password" type="password" required />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <InputField name="role" label="Role" select required>
                 <MenuItem value="staff">Staff</MenuItem>
                 <MenuItem value="guest">Guest</MenuItem>

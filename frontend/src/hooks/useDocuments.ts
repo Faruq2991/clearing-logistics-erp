@@ -20,7 +20,7 @@ export function useUploadDocument() {
   return useMutation({
     mutationFn: ({ vehicleId, formData }: { vehicleId: number; formData: FormData }) =>
       documentsApi.upload(vehicleId, formData),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate and refetch the documents list for the specific vehicle
       queryClient.invalidateQueries({ queryKey: ['documents', variables.vehicleId] });
     },
@@ -32,7 +32,7 @@ export function useDeleteDocument() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (documentId: number) => documentsApi.delete(documentId),
-    onSuccess: (data, documentId) => {
+    onSuccess: (_data, _documentId) => {
       // This is tricky because we don't know the vehicleId from the documentId here.
       // A global invalidation is simpler but less efficient.
       // For a better UX, the onSuccess callback in the component could invalidate.
