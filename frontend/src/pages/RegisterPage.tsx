@@ -18,6 +18,8 @@ import { authApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 const schema = z.object({
+  firstName: z.string().min(1, { message: 'First name is required' }),
+  lastName: z.string().optional(),
   email: z.string().email({ message: 'Invalid email address' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters' }),
   confirmPassword: z.string().min(8, { message: 'Please confirm your password' }),
@@ -36,7 +38,7 @@ export default function RegisterPage() {
   const onSubmit = async (data: z.infer<typeof schema>) => {
     setServerError(null);
     try {
-      await authApi.register({ email: data.email, password: data.password, role: "admin" });
+      await authApi.register({ email: data.email, password: data.password, first_name: data.firstName, last_name: data.lastName, role: "admin" });
       await login(data.email, data.password);
       navigate('/');
     } catch (err: unknown) {
@@ -76,11 +78,28 @@ export default function RegisterPage() {
               margin="normal"
               required
               fullWidth
+              id="firstName"
+              label="First Name"
+              name="firstName"
+              autoComplete="given-name"
+              autoFocus
+            />
+            <InputField
+              margin="normal"
+              fullWidth
+              id="lastName"
+              label="Last Name"
+              name="lastName"
+              autoComplete="family-name"
+            />
+            <InputField
+              margin="normal"
+              required
+              fullWidth
               id="email"
               label="Email Address"
               name="email"
               autoComplete="email"
-              autoFocus
             />
             <InputField
               margin="normal"
@@ -120,3 +139,4 @@ export default function RegisterPage() {
     </Container>
   );
 }
+

@@ -21,6 +21,8 @@ def register_new_user(db: Session, user_data: user_schemas.UserCreate):
     hashed_password = auth_utils.get_password_hash(user_data.password)
     new_user = user_models.User(
         email=user_data.email, 
+        first_name=user_data.first_name,
+        last_name=user_data.last_name,
         hashed_password=hashed_password,
         role=user_data.role
     )

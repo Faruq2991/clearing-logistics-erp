@@ -34,7 +34,7 @@ export default function Layout() {
           </ul>
         </nav>
         <div className={styles.user}>
-          <span>{user?.email}</span>
+          <span>{user?.email} {user?.last_name && `(${user.last_name})`}</span>
           <button onClick={logout}>Logout</button>
         </div>
       </header>

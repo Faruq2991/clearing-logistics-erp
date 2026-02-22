@@ -7,9 +7,18 @@ import KPICard from '../components/kpi/KPICard';
 import styles from './DashboardPage.module.css';
 import Button from '../components/button/Button';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+}
 
 export default function DashboardPage() {
   const { data, isLoading, error } = useDashboardStats();
+  const { user } = useAuth();
 
   const summaryData = [
     { title: 'Vehicles In Progress', value: data?.vehicles_in_progress ?? '...', trend: data?.vehicles_in_progress_trend ?? 0 },
@@ -30,7 +39,7 @@ export default function DashboardPage() {
     <div className={styles.dashboard}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.greeting}>Good Morning</h1>
+          <h1 className={styles.greeting}>{getGreeting()}{user?.last_name ? `, ${user.last_name}` : ''}</h1>
           <p className={styles.subGreeting}>Hi, welcome back!</p>
         </div>
         <div className={styles.controls}>

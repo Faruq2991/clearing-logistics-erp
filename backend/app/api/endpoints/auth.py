@@ -3,12 +3,13 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas import user as user_schemas
+from app.schemas.auth import LoginResponse
 # Import the new service
 from app.services import auth_service
 
 router = APIRouter()
 
-@router.post("/login")
+@router.post("/login", response_model=LoginResponse)
 def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
     user = auth_service.authenticate_user(db, form_data.username, form_data.password)
     if not user:
@@ -18,7 +19,7 @@ def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = 
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = auth_service.create_access_token_for_user(user)
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"token": {"access_token": access_token, "token_type": "bearer"}, "user": user}
 
 @router.post("/register", response_model=user_schemas.UserResponse)
 def register(user: user_schemas.UserCreate, db: Session = Depends(get_db)):

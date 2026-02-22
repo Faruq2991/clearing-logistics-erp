@@ -2,11 +2,12 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../services/api';
-import { jwtDecode } from 'jwt-decode';
 
 interface User {
   email: string;
   role: string;
+  first_name: string;
+  last_name?: string;
 }
 
 interface AuthContextType {
@@ -19,42 +20,38 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-function decodeToken(token: string): User | null {
-  try {
-    const decoded: { sub: string; role: string } = jwtDecode(token);
-    return { email: decoded.sub, role: decoded.role };
-  } catch (error) {
-    console.error('Failed to decode token:', error);
-    return null;
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() =>
     localStorage.getItem('access_token')
   );
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (token) {
-      const decodedUser = decodeToken(token);
-      setUser(decodedUser);
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
     }
   }, [token]);
 
   const login = async (email: string, password: string) => {
     const { data } = await authApi.login(email, password);
-    const t = data.access_token;
-    localStorage.setItem('access_token', t);
-    setToken(t);
-    const decodedUser = decodeToken(t);
-    setUser(decodedUser);
+    const { token: tokenData, user: userData } = data;
+    localStorage.setItem('access_token', tokenData.access_token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setToken(tokenData.access_token);
+    setUser(userData);
     queryClient.clear();
   };
 
   const logout = () => {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
     queryClient.clear();
