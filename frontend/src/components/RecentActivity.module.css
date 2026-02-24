@@ -33,10 +33,12 @@
   display: flex;
   gap: var(--spacing-2);
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .userName {
   font-weight: 600;
+  color: #1976d2;
 }
 
 .action {
@@ -45,26 +47,31 @@
 
 .target {
   font-style: italic;
-}
-
-.targetType {
-  color: var(--secondary-text-color);
-  text-transform: capitalize;
+  color: #666;
 }
 
 .targetLink {
-  color: var(--primary-color);
+  font-style: italic;
+  color: #1976d2;
   text-decoration: none;
   font-weight: 500;
+  transition: color 0.2s;
 }
 
 .targetLink:hover {
+  color: #1565c0;
   text-decoration: underline;
+}
+
+.details {
+  color: #2e7d32;
+  font-size: 0.9rem;
 }
 
 .timestamp {
   color: var(--secondary-text-color);
   font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .noActivity {

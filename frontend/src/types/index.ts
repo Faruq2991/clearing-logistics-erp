@@ -117,8 +117,7 @@ export interface Activity {
   target_type: string | null;
   target_name: string | null;
   target_id: number | null;
-  old_value: string | null;
-  new_value: string | null;
+  details: string | null;
   created_at: string;
 }
 
@@ -154,4 +153,3 @@ export interface FinancialsReport {
     net_profit: number;
     items: FinancialsReportItem[];
 }
-
