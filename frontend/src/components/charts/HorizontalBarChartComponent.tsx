@@ -8,14 +8,14 @@ interface BarChartData {
   value: number;
 }
 
-interface BarChartComponentProps {
+interface HorizontalBarChartComponentProps {
   title: string;
   data: BarChartData[];
   xLabel: string;
   yLabel: string;
 }
 
-const BarChartComponent: React.FC<BarChartComponentProps> = ({ title, data, xLabel, yLabel }) => {
+const HorizontalBarChartComponent: React.FC<HorizontalBarChartComponentProps> = ({ title, data, xLabel, yLabel }) => {
   return (
     <Card elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 2 }}>
       <CardContent>
@@ -35,20 +35,21 @@ const BarChartComponent: React.FC<BarChartComponentProps> = ({ title, data, xLab
           ) : (
             <ResponsiveContainer>
               <BarChart
+                layout="vertical"
                 data={data}
                 margin={{
                   top: 5,
                   right: 30,
                   left: 20,
-                  bottom: 30, // Increased bottom margin
+                  bottom: 5,
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" label={{ value: xLabel, position: 'insideBottom', offset: 0 }} />
-                <YAxis label={{ value: yLabel, angle: -90, position: 'insideLeft' }} />
+                <XAxis type="number" label={{ value: xLabel, position: 'insideBottom', offset: 0 }} />
+                <YAxis type="category" dataKey="name" label={{ value: yLabel, angle: -90, position: 'insideLeft' }} tick={{ fontSize: 10 }} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="value" fill="#8884d8" radius={[10, 10, 0, 0]} />
+                <Bar dataKey="value" fill="#8884d8" radius={[0, 10, 10, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -58,4 +59,4 @@ const BarChartComponent: React.FC<BarChartComponentProps> = ({ title, data, xLab
   );
 };
 
-export default BarChartComponent;
+export default HorizontalBarChartComponent;

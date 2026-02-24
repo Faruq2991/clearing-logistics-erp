@@ -116,6 +116,9 @@ export interface Activity {
   action: string;
   target_type: string | null;
   target_name: string | null;
+  target_id: number | null;
+  old_value: string | null;
+  new_value: string | null;
   created_at: string;
 }
 

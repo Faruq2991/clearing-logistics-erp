@@ -29,8 +29,14 @@
 
 .analyticsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); /* Default for smaller screens or when stacking */
   gap: var(--spacing-3);
+}
+
+@media (min-width: 1024px) { /* Apply specific column sizing on larger screens */
+  .analyticsGrid {
+    grid-template-columns: 1fr 2fr; /* Pie chart takes 1 part, Bar chart takes 2 parts */
+  }
 }
 
 .chartContainer {

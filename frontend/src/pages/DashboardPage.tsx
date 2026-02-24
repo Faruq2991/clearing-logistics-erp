@@ -1,7 +1,7 @@
 import { useDashboardStats } from '../hooks/useDashboard';
 import ErrorAlert from '../components/ErrorAlert';
 import PieChartComponent from '../components/charts/PieChartComponent';
-import BarChartComponent from '../components/charts/BarChartComponent';
+import HorizontalBarChartComponent from '../components/charts/HorizontalBarChartComponent';
 import RecentActivity from '../components/RecentActivity';
 import KPICard from '../components/kpi/KPICard';
 import styles from './DashboardPage.module.css';
@@ -24,7 +24,7 @@ export default function DashboardPage() {
     { title: 'Vehicles In Progress', value: data?.vehicles_in_progress ?? '...', trend: data?.vehicles_in_progress_trend ?? 0 },
     { title: 'Total Cleared', value: data?.total_cleared_vehicles ?? '...', trend: data?.total_cleared_vehicles_trend ?? 0 },
     { title: 'Pending Documents', value: data?.pending_documents ?? '...', trend: data?.pending_documents_trend ?? 0 },
-    { title: 'Total Outstanding Debt', value: data?.total_outstanding_debt !== undefined ? `$${data.total_outstanding_debt.toFixed(2)}` : '...', trend: data?.total_outstanding_debt_trend ?? 0 },
+{ title: 'Total Outstanding Debt', value: data?.total_outstanding_debt !== undefined ? `₦${data.total_outstanding_debt.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '...', trend: data?.total_outstanding_debt_trend ?? 0 },
   ];
 
   const vehicleStatusChartData = data?.vehicle_status_distribution
@@ -64,11 +64,11 @@ export default function DashboardPage() {
                 <PieChartComponent title="Vehicle Status Distribution" data={vehicleStatusChartData} />
             </div>
             <div className={styles.chartContainer}>
-                <BarChartComponent
+                <HorizontalBarChartComponent
                 title="Active Vessel Counts"
                 data={activeVesselChartData}
-                xLabel="Vessel"
-                yLabel="Number of Vehicles"
+                xLabel="Number of Vehicles"
+                yLabel="Vessel"
                 />
             </div>
           </div>

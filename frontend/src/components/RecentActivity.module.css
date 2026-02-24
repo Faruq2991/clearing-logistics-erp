@@ -47,6 +47,21 @@
   font-style: italic;
 }
 
+.targetType {
+  color: var(--secondary-text-color);
+  text-transform: capitalize;
+}
+
+.targetLink {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.targetLink:hover {
+  text-decoration: underline;
+}
+
 .timestamp {
   color: var(--secondary-text-color);
   font-size: 0.9rem;
