@@ -50,8 +50,8 @@ class Vehicle(Base):
     
     # Relationships
     owner = relationship("User")
-    financials = relationship("Financials", back_populates="vehicle", uselist=False)
-    documents = relationship("Document", back_populates="vehicle")
+    financials = relationship("Financials", back_populates="vehicle", uselist=False, cascade="all, delete-orphan")
+    documents = relationship("Document", back_populates="vehicle", cascade="all, delete-orphan")
 
 
 class Document(Base):
@@ -84,7 +84,7 @@ class Financials(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     vehicle = relationship("Vehicle", back_populates="financials")
-    payments = relationship("Payment", back_populates="financial")
+    payments = relationship("Payment", back_populates="financial", cascade="all, delete-orphan")
 
 
 class Payment(Base):

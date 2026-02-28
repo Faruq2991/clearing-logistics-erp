@@ -21,9 +21,7 @@ import {
   DialogContentText,
   DialogTitle,
 } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { useState } from 'react';
-import { useVehicle, useUpdateVehicleStatus, useDeleteVehicle } from '../hooks/useVehicles';
+import { Grid } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
   Description as DescriptionIcon,
@@ -35,6 +33,9 @@ import ErrorAlert from '../components/ErrorAlert';
 import { useAuth } from '../contexts/AuthContext';
 import DocumentsTab from '../components/DocumentsTab';
 import FinancialsTab from '../components/FinancialsTab';
+import type { VehicleResponse } from '../types';
+import { useState } from 'react';
+import { useVehicle, useUpdateVehicleStatus, useDeleteVehicle } from '../hooks/useVehicles';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -71,6 +72,51 @@ const getStatusChipColor = (status: string) => {
     }
   };
 
+function CostBreakdown({ vehicle }: { vehicle: VehicleResponse }) {
+  const costFields = [
+    { label: 'CPC', value: vehicle.cpc },
+    { label: 'Valuation', value: vehicle.valuation },
+    { label: 'Customs Duty', value: vehicle.customs_duty },
+    { label: 'Comet Shipping', value: vehicle.comet_shipping },
+    { label: 'Terminal Charges', value: vehicle.terminal_charges },
+    { label: 'Agencies', value: vehicle.agencies },
+    { label: 'Examination', value: vehicle.examination },
+    { label: 'Release', value: vehicle.release },
+    { label: 'Disc', value: vehicle.disc },
+    { label: 'Gate', value: vehicle.gate },
+    { label: 'CIU', value: vehicle.ciu },
+    { label: 'Monitoring', value: vehicle.monitoring },
+  ];
+
+  const totalCost = costFields.reduce((acc, field) => acc + (Number(field.value) || 0), 0);
+
+  return (
+    <Card>
+      <CardHeader title="Cost Breakdown" />
+      <CardContent>
+        <Grid container spacing={3}>
+          {costFields.map((item, index) => (
+            <Grid key={index} size={{ xs: 6, sm: 4, md: 3 }}>
+              <Typography variant="caption" color="text.secondary" display="block">
+                {item.label}
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                {new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(item.value || 0)}
+              </Typography>
+            </Grid>
+          ))}
+
+          <Grid size={{ xs: 12 }} sx={{ mt: 2, pt: 2, borderTop: '1px dashed #ccc' }}>
+            <Typography variant="h6" color="primary">
+              Total Cost: {new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(totalCost)}
+            </Typography>
+          </Grid>
+        </Grid>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function VehicleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const vehicleId = id ? parseInt(id, 10) : null;
@@ -90,12 +136,8 @@ export default function VehicleDetailPage() {
 
   const handleDelete = async () => {
     if (!vehicleId) return;
-    try {
-      await deleteVehicle(vehicleId);
-      navigate('/vehicles');
-    } catch (e) {
-      // Error is already logged in the hook
-    }
+    await deleteVehicle(vehicleId);
+    navigate('/vehicles');
   };
 
   if (!vehicleId || isNaN(vehicleId)) {
@@ -145,7 +187,7 @@ export default function VehicleDetailPage() {
       </Box>
 
       <Paper>
-        <Tabs value={tab} onChange={(_, v: any) => setTab(v)} indicatorColor="primary" textColor="primary" centered>
+        <Tabs value={tab} onChange={(_, v: number) => setTab(v)} indicatorColor="primary" textColor="primary" centered>
           <Tab icon={<InfoIcon />} label="Details" />
           <Tab icon={<DescriptionIcon />} label="Documents" />
           {user?.role === 'admin' && <Tab icon={<AttachMoneyIcon />} label="Financials" />}
@@ -162,6 +204,14 @@ export default function VehicleDetailPage() {
                   <Typography><strong>Model:</strong> {vehicle.model}</Typography>
                   <Typography><strong>Year:</strong> {vehicle.year}</Typography>
                   <Typography><strong>Color:</strong> {vehicle.color ?? '—'}</Typography>
+                  <Typography>
+                    <strong>Service Type:</strong>{' '}
+                    {vehicle.clearance_type === 'FULL'
+                      ? 'Full Vehicle Clearance'
+                      : vehicle.clearance_type === 'RELEASE_GATE'
+                      ? 'Release & Gate Only'
+                      : '—'}
+                  </Typography>
                   {user?.role === 'admin' && (
                     <Box mt={2}>
                       <Button
@@ -194,7 +244,7 @@ export default function VehicleDetailPage() {
                       <FormControl sx={{ ml: 1, minWidth: 120 }} size="small">
                         <Select
                           value={vehicle.status}
-                          onChange={(e: any) => handleStatusChange(e.target.value)}
+                          onChange={(e: { target: { value: string } }) => handleStatusChange(e.target.value)}
                           disabled={isUpdatingStatus}
                         >
                           <MenuItem value="In Transit">In Transit</MenuItem>
@@ -208,6 +258,9 @@ export default function VehicleDetailPage() {
                   </Box>
                 </CardContent>
               </Card>
+            </Grid>
+            <Grid size={12}>
+              <CostBreakdown vehicle={vehicle} />
             </Grid>
           </Grid>
         </TabPanel>

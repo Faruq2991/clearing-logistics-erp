@@ -308,8 +308,8 @@ export default function AddVehiclePage() {
       clearance_type: 'FULL',
       vin: '', make: '', model: '', year: new Date().getFullYear(), color: '',
       ship_name: '', terminal: '', arrival_date: null, status: 'In Transit',
-      agencies: 0, examination: 0, release: 0, disc: 0, gate: 0, ciu: 0, monitoring: 0,
-      cpc: 0, valuation: 0, customs_duty: 0, comet_shipping: 0, terminal_charges: 0,
+      agencies: undefined, examination: undefined, release: undefined, disc: undefined, gate: undefined, ciu: undefined, monitoring: undefined,
+      cpc: undefined, valuation: undefined, customs_duty: undefined, comet_shipping: undefined, terminal_charges: undefined,
     },
   });
 

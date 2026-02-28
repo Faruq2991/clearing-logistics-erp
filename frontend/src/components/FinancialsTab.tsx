@@ -99,6 +99,11 @@ export default function FinancialsTab({ vehicleId }: FinancialsTabProps) {
                     type="number"
                     value={totalCost}
                     onChange={(e) => setTotalCost(Number(e.target.value))}
+                    onFocus={() => {
+                        if (totalCost === 0) {
+                            setTotalCost('');
+                        }
+                    }}
                     sx={{ mb: 2 }}
                 />
                 <Button

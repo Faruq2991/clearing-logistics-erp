@@ -21,11 +21,38 @@ const getStatusChipColor = (status: string) => {
   }
 };
 
+const calculateTotalCost = (vehicle: VehicleResponse) => {
+  const costFields: (keyof VehicleResponse)[] = [
+    'agencies', 'examination', 'release', 'disc', 'gate', 'ciu', 'monitoring',
+    'cpc', 'valuation', 'customs_duty', 'comet_shipping', 'terminal_charges'
+  ];
+  return costFields.reduce((total, field) => total + (Number(vehicle[field]) || 0), 0);
+};
+
 const columns: GridColDef[] = [
   { field: 'vin', headerName: 'VIN', flex: 1.5 },
   { field: 'make', headerName: 'Make', flex: 1 },
   { field: 'model', headerName: 'Model', flex: 1 },
   { field: 'year', headerName: 'Year', width: 100 },
+  {
+    field: 'clearance_type',
+    headerName: 'Service Type',
+    flex: 1,
+    valueFormatter: (params) => {
+      if (params.value === 'FULL') return 'Full Vehicle Clearance';
+      if (params.value === 'RELEASE_GATE') return 'Release & Gate Only';
+      return params.value;
+    },
+  },
+  {
+    field: 'totalCost',
+    headerName: 'Amount',
+    flex: 1,
+    valueGetter: (value, row) => calculateTotalCost(row),
+    renderCell: (params) => (
+      <span>{new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(params.value)}</span>
+    ),
+  },
   {
     field: 'status',
     headerName: 'Status',
@@ -83,7 +110,7 @@ export default function VehiclesPage() {
   const vehicles = (data as VehicleResponse[] | undefined) ?? [];
   const navigate = useNavigate();
 
-  const handleRowClick = (params: { id: any; }) => {
+  const handleRowClick = (params: { id: string | number; }) => {
     navigate(`/vehicles/${params.id}`);
   };
 

@@ -42,6 +42,12 @@ export interface VehicleCreate {
   gate?: number;
   ciu?: number;
   monitoring?: number;
+  cpc?: number;
+  valuation?: number;
+  customs_duty?: number;
+  comet_shipping?: number;
+  terminal_charges?: number;
+  clearance_type?: 'FULL' | 'RELEASE_GATE';
 }
 
 export interface VehicleResponse extends VehicleCreate {

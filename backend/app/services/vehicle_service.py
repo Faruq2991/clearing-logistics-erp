@@ -74,7 +74,7 @@ def get_vehicles_list(db: Session, current_user: User, skip: int = 0, limit: int
 def get_vehicle_by_id(db: Session, vehicle_id: int, current_user: User) -> Vehicle:
     db_vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
     if db_vehicle is None:
-        raise HTTPException(status_code=404, detail="Vehicle not found")
+        raise HTTPException(status_code=404, detail=f"Vehicle with id {vehicle_id} not found")
     
     if db_vehicle.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to view this vehicle")

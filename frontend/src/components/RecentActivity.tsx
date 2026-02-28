@@ -12,6 +12,7 @@ const RecentActivity: React.FC = () => {
     // If it's a vehicle and has an ID, make it clickable
     if (activity.target_type === 'vehicles' && activity.target_id) {
       return (
+        
         <Link 
           to={`/vehicles/${activity.target_id}`}
           className={styles.targetLink}
