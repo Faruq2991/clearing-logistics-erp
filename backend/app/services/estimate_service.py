@@ -1,10 +1,13 @@
 from sqlalchemy.orm import Session
 from decouple import config
-from app.models.main import Vehicle, Financials
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 
-def get_clearing_cost_estimate(db: Session, make: str, model: str, year: int, terminal: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    
+from app.models.main import Vehicle, Financials, Terminal
+
+
+def get_clearing_cost_estimate(
+    db: Session, make: str, model: str, year: int, terminal: Optional[str] = None
+) -> Optional[Dict[str, Any]]:
     def calculate_average(query_result):
         if not query_result:
             return None, 0
@@ -26,15 +29,45 @@ def get_clearing_cost_estimate(db: Session, make: str, model: str, year: int, te
         return avg_cost, len(adjusted_costs)
 
     search_hierarchy = []
-    base_query = db.query(Financials).join(Vehicle)
+    base_query = db.query(Financials).join(Vehicle).join(Terminal, Vehicle.terminal_id == Terminal.id)
 
     if terminal:
-        search_hierarchy.extend([
-            ("exact_with_terminal", base_query.filter(Vehicle.make == make, Vehicle.model == model, Vehicle.year == year, Vehicle.terminal == terminal)),
-            ("make_model_with_terminal", base_query.filter(Vehicle.make == make, Vehicle.model == model, Vehicle.terminal == terminal)),
-            ("make_year_with_terminal", base_query.filter(Vehicle.make == make, Vehicle.year == year, Vehicle.terminal == terminal)),
-            ("make_with_terminal", base_query.filter(Vehicle.make == make, Vehicle.terminal == terminal)),
-        ])
+        search_hierarchy.extend(
+            [
+                (
+                    "exact_with_terminal",
+                    base_query.filter(
+                        Vehicle.make == make,
+                        Vehicle.model == model,
+                        Vehicle.year == year,
+                        Terminal.name == terminal,
+                    ),
+                ),
+                (
+                    "make_model_with_terminal",
+                    base_query.filter(
+                        Vehicle.make == make,
+                        Vehicle.model == model,
+                        Terminal.name == terminal,
+                    ),
+                ),
+                (
+                    "make_year_with_terminal",
+                    base_query.filter(
+                        Vehicle.make == make,
+                        Vehicle.year == year,
+                        Terminal.name == terminal,
+                    ),
+                ),
+                (
+                    "make_with_terminal",
+                    base_query.filter(
+                        Vehicle.make == make,
+                        Terminal.name == terminal,
+                    ),
+                ),
+            ]
+        )
 
     search_hierarchy.extend([
         ("exact", base_query.filter(Vehicle.make == make, Vehicle.model == model, Vehicle.year == year)),

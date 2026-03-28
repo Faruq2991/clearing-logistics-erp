@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.models.main import Vehicle, Document, Financials
+from app.models.main import Vehicle, Document, Financials, Ship
 from datetime import datetime, timedelta
 
 from app.models.user import User
@@ -26,12 +26,20 @@ def get_dashboard_stats(db: Session, current_user: User):
     total_paid = user_financials.with_entities(func.sum(Financials.amount_paid)).scalar() or 0.0
     total_outstanding_debt = total_billed - total_paid
 
-    status_distribution_query = user_vehicles.with_entities(Vehicle.status, func.count(Vehicle.id)).group_by(Vehicle.status).all()
+    status_distribution_query = (
+        user_vehicles.with_entities(Vehicle.status, func.count(Vehicle.id))
+        .group_by(Vehicle.status)
+        .all()
+    )
     vehicle_status_distribution = {status: count for status, count in status_distribution_query}
 
-    active_vessel_counts_query = user_vehicles.with_entities(Vehicle.ship_name, func.count(Vehicle.id)).filter(
-        Vehicle.status.notin_(['Done'])
-    ).group_by(Vehicle.ship_name).all()
+    active_vessel_counts_query = (
+        user_vehicles.join(Ship, Vehicle.ship_id == Ship.id)
+        .with_entities(Ship.name, func.count(Vehicle.id))
+        .filter(Vehicle.status.notin_(['Done']))
+        .group_by(Ship.name)
+        .all()
+    )
     active_vessel_counts = {ship_name: count for ship_name, count in active_vessel_counts_query}
     
     # --- Trend Calculation ---

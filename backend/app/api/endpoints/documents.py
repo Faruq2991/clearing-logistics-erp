@@ -12,7 +12,7 @@ from app.database import get_db
 from app.models.main import DocumentType # Keep DocumentType for Form parameter
 from app.models.user import User
 from app.schemas.document import DocumentResponse, DocumentUploadResponse
-from app.core.security import get_current_user, check_staff_privilege
+from app.core.auth_utils import get_current_user, is_admin_or_staff 
 from app.core.storage import LocalStorageService # For type checking
 
 # Import the new service
@@ -45,7 +45,7 @@ async def upload_document(
     document_type: DocumentType = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(check_staff_privilege),
+    current_user: User = Depends(is_admin_or_staff),
 ):
     """Upload a document for a vehicle. Allowed: PDF, JPEG, PNG. Max 10MB."""
     document_service.get_vehicle_with_access(db, vehicle_id, current_user) # Access check
@@ -117,7 +117,7 @@ def get_document_versions_endpoint(
 def delete_document(
     document_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(check_staff_privilege),
+    current_user: User = Depends(is_admin_or_staff),
 ):
     """Delete a document. Soft-delete (set replaced_by) or hard delete for Phase 1."""
     return document_service.delete_document_record(db, document_id, current_user)

@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect
 from .database import engine, Base, SessionLocal
-from .api.endpoints import vehicles, financials, documents, estimate, auth, users, audit_logs, dashboard, activity
+from .api.endpoints import vehicles, financials, documents, estimate, auth, users, audit_logs, dashboard, activity, terminals, carriers, ships 
 from .models.user import User, UserRole
 from .core.auth_utils import get_password_hash
 from decouple import config
@@ -62,9 +62,10 @@ app = FastAPI(
 # Serve static files for document previews
 app.mount("/api/documents/files", StaticFiles(directory="uploads"), name="document_files")
 
+# CORS configuration - allows all localhost and WSL IPs during development
 app.add_middleware(
     CORSMiddleware,
-        allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "http://172.30.77.52:5173"],
+    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1|172\.\d+\.\d+\.\d+)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -84,3 +85,6 @@ app.include_router(estimate.router, prefix="/api/estimate", tags=["Estimator"])
 app.include_router(audit_logs.router, prefix="/api/audit-logs", tags=["Audit Logs"])
 app.include_router(dashboard.router, prefix="/api", tags=["Dashboard"])
 app.include_router(activity.router, prefix="/api/activities", tags=["Activities"])
+app.include_router(terminals.router, prefix="/api/terminals", tags=["Terminals"]) 
+app.include_router(carriers.router, prefix="/api/carriers", tags=["Carriers"])     
+app.include_router(ships.router, prefix="/api/ships", tags=["Ships"])

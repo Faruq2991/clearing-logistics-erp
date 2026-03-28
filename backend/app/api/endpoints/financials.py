@@ -16,7 +16,7 @@ from app.schemas.financials import (
     PaymentCreate,
     PaymentResponse,
 )
-from app.core.security import get_current_user, check_admin_privilege, check_staff_privilege
+from app.core.auth_utils import get_current_user, is_admin_or_staff
 
 # Import the new service
 from app.services import financial_service
@@ -45,12 +45,10 @@ def create_vehicle_financials(
     vehicle_id: int,
     data: FinancialsCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(check_staff_privilege),
+    current_user: User = Depends(is_admin_or_staff),
 ):
     """Create financials for a vehicle. One record per vehicle; returns 400 if already exists."""
-    # The _get_vehicle_with_access check is implicitly handled inside the service function
-    # by raising HTTPException if not authorized.
-    financial_service._get_vehicle_with_access(db, vehicle_id, current_user) # Ensure user has access to vehicle
+    financial_service._get_vehicle_with_access(db, vehicle_id, current_user)
     return financial_service.create_financial_record_for_vehicle(db, vehicle_id, data, current_user.id)
 
 
@@ -59,10 +57,10 @@ def update_vehicle_financials(
     vehicle_id: int,
     data: FinancialsUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(check_staff_privilege),
+    current_user: User = Depends(is_admin_or_staff),
 ):
     """Update financials (total_cost, exchange_rate)."""
-    financial_service._get_vehicle_with_access(db, vehicle_id, current_user) # Ensure user has access to vehicle
+    financial_service._get_vehicle_with_access(db, vehicle_id, current_user)
     return financial_service.update_financial_record_for_vehicle(db, vehicle_id, data, current_user.id)
 
 
@@ -71,10 +69,10 @@ def create_payment(
     vehicle_id: int,
     data: PaymentCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(check_staff_privilege),
+    current_user: User = Depends(is_admin_or_staff),
 ):
     """Record a payment (installment). Allows overpayment (negative balance for refunds/credits)."""
-    financial_service._get_vehicle_with_access(db, vehicle_id, current_user) # Ensure user has access to vehicle
+    financial_service._get_vehicle_with_access(db, vehicle_id, current_user)
     return financial_service.record_payment_for_vehicle(db, vehicle_id, data, current_user.id)
 
 
@@ -93,16 +91,8 @@ def list_vehicle_payments(
 # --- Financials-level endpoints (admin/staff list) ---
 
 from datetime import datetime
-from app.schemas.financials import (
-    FinancialsCreate,
-    FinancialsUpdate,
-    FinancialsWithBalanceResponse,
-    PaymentCreate,
-    PaymentResponse,
-    FinancialsReport,
-)
+from app.schemas.financials import FinancialsReport
 
-...
 
 @router.get("/report", response_model=FinancialsReport)
 def get_financials_report(
@@ -110,11 +100,9 @@ def get_financials_report(
     end_date: datetime,
     vehicle_id: Optional[int] = Query(None, description="Filter by vehicle ID"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(check_admin_privilege),
+    current_user: User = Depends(is_admin_or_staff),
 ):
-    """
-    Generate a financial report for a given period.
-    """
+    """Generate a financial report for a given period."""
     return financial_service.get_financial_report(db, start_date, end_date, current_user, vehicle_id)
 
 

@@ -7,12 +7,12 @@ from datetime import datetime
 from app.database import get_db
 from app.models.user import User
 from app.schemas.audit_log import AuditLogResponse
-from app.core.security import check_admin_privilege
+from app.core.auth_utils import get_current_user, is_admin_or_staff 
 from app.services import audit_log_service
 
 router = APIRouter()
 
-@router.get("/", response_model=List[AuditLogResponse], dependencies=[Depends(check_admin_privilege)])
+@router.get("/", response_model=List[AuditLogResponse], dependencies=[Depends(get_current_user), Depends(is_admin_or_staff)])
 def get_audit_logs(
     user_id: Optional[int] = None,
     action: Optional[str] = None,
@@ -32,7 +32,7 @@ def get_audit_logs(
     logs = audit_log_service.get_audit_logs(db, user_id, action, start_date, end_date, skip, limit)
     return logs
 
-@router.get("/export", dependencies=[Depends(check_admin_privilege)])
+@router.get("/export", dependencies=[Depends(get_current_user), Depends(is_admin_or_staff)])
 def export_audit_logs_as_csv(
     user_id: Optional[int] = None,
     action: Optional[str] = None,

@@ -19,6 +19,35 @@ class ClearanceType(str, enum.Enum):
 
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, func, Enum, UniqueConstraint
 
+class Terminal(Base):
+    __tablename__ = "terminals"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True, nullable=False)
+
+    carriers = relationship("Carrier", back_populates="terminal")
+    vehicles = relationship("Vehicle", back_populates="terminal_obj")
+
+
+class Carrier(Base):
+    __tablename__ = "carriers"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True, nullable=False)
+    terminal_id = Column(Integer, ForeignKey("terminals.id"), nullable=False)
+
+    terminal = relationship("Terminal", back_populates="carriers")
+    ships = relationship("Ship", back_populates="carrier")
+
+
+class Ship(Base):
+    __tablename__ = "ships"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True, nullable=False)
+    carrier_id = Column(Integer, ForeignKey("carriers.id"), nullable=False)
+
+    carrier = relationship("Carrier", back_populates="ships")
+    vehicles = relationship("Vehicle", back_populates="ship_obj")
+
+
 class Vehicle(Base):
     __tablename__ = "vehicles"
     __table_args__ = (UniqueConstraint('vin', 'owner_id', name='uq_vin_owner'),)
@@ -29,8 +58,11 @@ class Vehicle(Base):
     model = Column(String)
     year = Column(Integer)
     color = Column(String)
-    ship_name = Column(String)
-    terminal = Column(String)
+    
+    # Replace ship_name and terminal with foreign keys
+    ship_id = Column(Integer, ForeignKey("ships.id"), nullable=True)
+    terminal_id = Column(Integer, ForeignKey("terminals.id"), nullable=True)
+    
     arrival_date = Column(DateTime)
     status = Column(String, default="In Transit")
     owner_id = Column(Integer, ForeignKey("users.id"))
@@ -50,6 +82,8 @@ class Vehicle(Base):
     
     # Relationships
     owner = relationship("User")
+    terminal_obj = relationship("Terminal", back_populates="vehicles")
+    ship_obj = relationship("Ship", back_populates="vehicles")
     financials = relationship("Financials", back_populates="vehicle", uselist=False, cascade="all, delete-orphan")
     documents = relationship("Document", back_populates="vehicle", cascade="all, delete-orphan")
 
