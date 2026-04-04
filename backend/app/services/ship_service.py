@@ -21,8 +21,16 @@ def create_ship(db: Session, ship: ShipCreate) -> Ship:
     db.refresh(new_ship)
     return new_ship
 
-def get_ships(db: Session, skip: int = 0, limit: int = 100) -> List[Ship]:
-    return db.query(Ship).options(joinedload(Ship.carrier)).offset(skip).limit(limit).all()
+def get_ships(db: Session, skip: int = 0, limit: int = 100, carrier_id: int = None, terminal_id: int = None) -> List[Ship]:
+    query = db.query(Ship).options(joinedload(Ship.carrier))
+
+    if carrier_id is not None:
+        query = query.filter(Ship.carrier_id == carrier_id)
+    
+    if terminal_id is not None:
+        query = query.join(Carrier).filter(Carrier.terminal_id == terminal_id)
+
+    return query.offset(skip).limit(limit).all()
 
 def get_ship_by_id(db: Session, ship_id: int) -> Ship:
     ship = db.query(Ship).options(joinedload(Ship.carrier)).filter(Ship.id == ship_id).first()
@@ -30,8 +38,6 @@ def get_ship_by_id(db: Session, ship_id: int) -> Ship:
         raise HTTPException(status_code=404, detail="Ship not found")
     return ship
 
-def get_ships_by_carrier_id(db: Session, carrier_id: int, skip: int = 0, limit: int = 100) -> List[Ship]:
-    return db.query(Ship).options(joinedload(Ship.carrier)).filter(Ship.carrier_id == carrier_id).offset(skip).limit(limit).all()
 
 
 def update_ship(db: Session, ship_id: int, ship_update: ShipCreate) -> Ship:

@@ -62,10 +62,10 @@ app = FastAPI(
 # Serve static files for document previews
 app.mount("/api/documents/files", StaticFiles(directory="uploads"), name="document_files")
 
-# CORS configuration - allows all localhost and WSL IPs during development
+# CORS configuration - allows all origins for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1|172\.\d+\.\d+\.\d+)(:\d+)?$",
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

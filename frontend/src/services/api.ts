@@ -8,7 +8,8 @@ import type {
   UserCreate, // Add this import
 } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+console.log("API URL:", API_URL);
 
 export const api = axios.create({
   baseURL: API_URL,

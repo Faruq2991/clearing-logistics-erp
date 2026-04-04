@@ -11,7 +11,7 @@ import { useForm, useFormContext, Controller, FormProvider } from 'react-hook-fo
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useCreateVehicle } from '../hooks/useVehicles';
-import type { VehicleCreate } from '../types';
+import type { VehicleCreate, Terminal, Carrier, Ship } from '../types';
 import ErrorAlert from '../components/ErrorAlert';
 import InputField from '../components/form/InputField';
 import SelectField from '../components/form/SelectField';
@@ -23,14 +23,15 @@ import { api } from '../services/api';
 const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/;
 
 const vehicleSchema = z.object({
-  clearance_type: z.string().min(1, 'Please select a clearance type'),
+  clearance_type: z.enum(['FULL', 'RELEASE_GATE']),
   vin: z.string().length(17, { message: "VIN must be exactly 17 characters" }).regex(vinRegex, { message: "Invalid VIN format" }),
   make: z.string().min(1, 'Make is required'),
   model: z.string().min(1, 'Model is required'),
   year: z.coerce.number().int().min(1900, 'Invalid year').max(new Date().getFullYear() + 1, 'Invalid year'),
   color: z.string().optional(),
-  ship_name: z.string().optional(),
-  terminal: z.string().optional(),
+  terminal_id: z.coerce.number().min(1, 'Terminal is required'),
+  carrier_id: z.coerce.number().min(1, 'Carrier is required'),
+  ship_id: z.coerce.number().min(1, 'Ship is required'),
   arrival_date: z.date().optional().nullable(),
   status: z.string().min(1, 'Status is required'),
   agencies: z.coerce.number().optional(),
@@ -69,17 +70,6 @@ const VEHICLE_MAKES = {
   'SUBARU': ['Outback', 'Forester', 'Crosstrek', 'Ascent', 'Legacy', 'WRX', 'BRZ'],
   'JEEP': ['Wrangler', 'Grand Cherokee', 'Cherokee', 'Compass', 'Renegade', 'Gladiator'],
 };
-
-const SHIP_NAMES = [
-  'SILVER RAY', 'OCEAN STAR', 'PACIFIC VOYAGER', 'ATLANTIC PRIDE', 'MERCURY DREAM',
-  'NEPTUNE CARRIER', 'POSEIDON EXPRESS', 'MARINE SPIRIT',
-];
-
-const TERMINALS = [
-  { value: 'five_star_tin_can', label: 'Five Star - Tin Can' },
-  { value: 'grimaldi', label: 'Grimaldi' },
-  { value: 'apapa', label: 'Apapa' },
-];
 
 function ClearanceTypeStep() {
     const { control } = useFormContext<VehicleFormInputs>();
@@ -156,7 +146,7 @@ function VehicleModelField() {
   );
 }
 
-function Review() {
+function Review({ terminals, carriers, ships }: { terminals: Terminal[], carriers: Carrier[], ships: Ship[] }) {
   const { getValues } = useFormContext<VehicleFormInputs>();
   const values = getValues();
   
@@ -165,6 +155,10 @@ function Review() {
   
   const costFields = values.clearance_type === 'FULL' ? fullCostFields : releaseGateCostFields;
   const totalManualCost = costFields.reduce((acc, field) => acc + (Number(values[field as keyof VehicleFormInputs]) || 0), 0);
+
+  const selectedTerminal = terminals.find(t => t.id === values.terminal_id)?.name;
+  const selectedCarrier = carriers.find(c => c.id === values.carrier_id)?.name;
+  const selectedShip = ships.find(s => s.id === values.ship_id)?.name;
 
   return (
     <Box>
@@ -182,8 +176,9 @@ function Review() {
         <Divider sx={{ my: 2 }} />
         <Typography variant="h6" gutterBottom>Shipping Details</Typography>
         <List disablePadding>
-            <ListItem><ListItemText primary="Ship Name" secondary={values.ship_name || 'N/A'} /></ListItem>
-            <ListItem><ListItemText primary="Terminal" secondary={values.terminal ? TERMINALS.find(t => t.value === values.terminal)?.label || values.terminal : 'N/A'} /></ListItem>
+            <ListItem><ListItemText primary="Terminal" secondary={selectedTerminal || 'N/A'} /></ListItem>
+            <ListItem><ListItemText primary="Carrier" secondary={selectedCarrier || 'N/A'} /></ListItem>
+            <ListItem><ListItemText primary="Ship Name" secondary={selectedShip || 'N/A'} /></ListItem>
             <ListItem><ListItemText primary="Arrival Date" secondary={values.arrival_date ? new Date(values.arrival_date).toLocaleDateString() : 'N/A'} /></ListItem>
         </List>
         <Divider sx={{ my: 2 }} />
@@ -218,18 +213,28 @@ function CostOfRunningStep() {
     );
 }
 
-function StepContent({ step, setVin, vinAvailable }: { 
-  step: number, 
-  setVin: (vin: string) => void, 
-  vinAvailable: boolean | null 
+function StepContent({ 
+  step, 
+  setVin, 
+  vinAvailable,
+  terminals,
+  carriers,
+  ships
+}: { 
+  step: number;
+  setVin: (vin: string) => void;
+  vinAvailable: boolean | null;
+  terminals: Terminal[];
+  carriers: Carrier[];
+  ships: Ship[];
 }) {
   const { watch, setValue } = useFormContext<VehicleFormInputs>();
   const clearanceType = watch('clearance_type');
   const make = watch('make');
   const model = watch('model');
   const year = watch('year');
-  const terminal = watch('terminal');
-  const { data: estimateData } = useEstimate(make, model, year, terminal);
+  const terminalId = watch('terminal_id');
+  const { data: estimateData } = useEstimate(make, model, year, terminalId?.toString());
 
   if (estimateData?.average_clearing_cost) {
       setValue('estimated_total_cost', estimateData.average_clearing_cost);
@@ -239,7 +244,7 @@ function StepContent({ step, setVin, vinAvailable }: {
     case 0: return <ClearanceTypeStep />;
     case 1: return (
         <Grid container spacing={2}>
-            <Grid size={12}>
+            <Grid size={{ xs: 12 }}>
                 <InputField 
                     name="vin" 
                     label="VIN" 
@@ -256,14 +261,30 @@ function StepContent({ step, setVin, vinAvailable }: {
             <Grid size={{ xs: 12, sm: 4 }}><VehicleMakeField /></Grid>
             <Grid size={{ xs: 12, sm: 4 }}><VehicleModelField /></Grid>
             <Grid size={{ xs: 12, sm: 4 }}><InputField name="year" label="Year" type="number" required /></Grid>
-            <Grid size={12}><InputField name="color" label="Color" /></Grid>
+            <Grid size={{ xs: 12 }}><InputField name="color" label="Color" /></Grid>
         </Grid>
     );
     case 2: return (
         <Grid container spacing={2}>
-            <Grid size={12}><Controller name="ship_name" render={({ field }) => ( <Autocomplete {...field} options={SHIP_NAMES} value={field.value || null} onChange={(_, newValue) => field.onChange(newValue || '')} renderInput={(params) => ( <TextField {...params} label="Ship Name" /> )} freeSolo /> )}/></Grid>
-            <Grid size={12}><SelectField name="terminal" label="Terminal"><MenuItem value=""><em>None</em></MenuItem>{TERMINALS.map((t) => ( <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem> ))}</SelectField></Grid>
-            <Grid size={12}><Controller name="arrival_date" render={({ field }) => ( <DatePicker label="Arrival Date" value={field.value || null} onChange={(date) => field.onChange(date)} slotProps={{ textField: { fullWidth: true } }} /> )}/></Grid>
+            <Grid size={{ xs: 12 }}>
+              <SelectField name="terminal_id" label="Terminal" required>
+                <MenuItem value=""><em>Select a terminal</em></MenuItem>
+                {terminals.map((t) => ( <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem> ))}
+              </SelectField>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <SelectField name="carrier_id" label="Carrier" required>
+                <MenuItem value=""><em>Select a carrier</em></MenuItem>
+                {carriers.map((c) => ( <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem> ))}
+              </SelectField>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <SelectField name="ship_id" label="Ship Name" required>
+                <MenuItem value=""><em>Select a ship</em></MenuItem>
+                {ships.map((s) => ( <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem> ))}
+              </SelectField>
+            </Grid>
+            <Grid size={{ xs: 12 }}><Controller name="arrival_date" render={({ field }) => ( <DatePicker label="Arrival Date" value={field.value || null} onChange={(date) => field.onChange(date)} slotProps={{ textField: { fullWidth: true } }} /> )}/></Grid>
         </Grid>
     );
     case 3: return (
@@ -273,7 +294,7 @@ function StepContent({ step, setVin, vinAvailable }: {
             {clearanceType === 'FULL' ? <FullClearanceCostStep /> : <CostOfRunningStep />}
         </>
     );
-    case 4: return <Review />;
+    case 4: return <Review terminals={terminals} carriers={carriers} ships={ships} />;
     default: return 'Unknown step';
   }
 }
@@ -284,6 +305,70 @@ export default function AddVehiclePage() {
   const [activeStep, setActiveStep] = useState(0);
   const [vin, setVin] = useState('');
   const [vinAvailable, setVinAvailable] = useState<boolean | null>(null);
+
+  const [terminals, setTerminals] = useState<Terminal[]>([]);
+  const [carriers, setCarriers] = useState<Carrier[]>([]);
+  const [ships, setShips] = useState<Ship[]>([]);
+
+  const methods = useForm<VehicleFormInputs>({
+    resolver: zodResolver(vehicleSchema),
+    defaultValues: {
+      clearance_type: 'FULL',
+      vin: '', make: '', model: '', year: new Date().getFullYear(), color: '',
+      terminal_id: 0, carrier_id: 0, ship_id: 0,
+      arrival_date: null, status: 'In Transit',
+      agencies: undefined, examination: undefined, release: undefined, disc: undefined, gate: undefined, ciu: undefined, monitoring: undefined,
+      cpc: undefined, valuation: undefined, customs_duty: undefined, comet_shipping: undefined, terminal_charges: undefined,
+    },
+  });
+
+  const { trigger, handleSubmit, watch, setValue } = methods;
+  const selectedTerminalId = watch('terminal_id');
+  const selectedCarrierId = watch('carrier_id');
+
+  useEffect(() => {
+    const fetchTerminals = async () => {
+      try {
+        const response = await api.get('/terminals');
+        setTerminals(response.data);
+      } catch (error) {
+        console.error("Error fetching terminals:", error);
+      }
+    };
+    fetchTerminals();
+  }, []);
+
+  useEffect(() => {
+    const fetchCarriers = async () => {
+      if (selectedTerminalId) {
+        try {
+          const response = await api.get(`/carriers?terminal_id=${selectedTerminalId}`);
+          setCarriers(response.data);
+          setShips([]);
+          setValue('carrier_id', 0);
+          setValue('ship_id', 0);
+        } catch (error) {
+          console.error("Error fetching carriers:", error);
+        }
+      }
+    };
+    fetchCarriers();
+  }, [selectedTerminalId, setValue]);
+
+  useEffect(() => {
+    const fetchShips = async () => {
+      if (selectedCarrierId) {
+        try {
+          const response = await api.get(`/ships?carrier_id=${selectedCarrierId}`);
+          setShips(response.data);
+          setValue('ship_id', 0);
+        } catch (error) {
+          console.error("Error fetching ships:", error);
+        }
+      }
+    };
+    fetchShips();
+  }, [selectedCarrierId, setValue]);
 
   const checkVinAvailability = useCallback(debounce(async (vin: string) => {
     if (vin.length === 17) {
@@ -301,26 +386,13 @@ export default function AddVehiclePage() {
   useEffect(() => {
     checkVinAvailability(vin);
   }, [vin, checkVinAvailability]);
-  
-  const methods = useForm<VehicleFormInputs>({
-    resolver: zodResolver(vehicleSchema),
-    defaultValues: {
-      clearance_type: 'FULL',
-      vin: '', make: '', model: '', year: new Date().getFullYear(), color: '',
-      ship_name: '', terminal: '', arrival_date: null, status: 'In Transit',
-      agencies: undefined, examination: undefined, release: undefined, disc: undefined, gate: undefined, ciu: undefined, monitoring: undefined,
-      cpc: undefined, valuation: undefined, customs_duty: undefined, comet_shipping: undefined, terminal_charges: undefined,
-    },
-  });
-
-  const { trigger, handleSubmit } = methods;
 
   const handleNext = async () => {
     let fields: (keyof VehicleFormInputs)[] = [];
     switch(activeStep) {
         case 0: fields = ['clearance_type']; break;
         case 1: fields = ['vin', 'make', 'model', 'year']; break;
-        case 2: fields = ['ship_name', 'terminal', 'arrival_date']; break;
+        case 2: fields = ['terminal_id', 'carrier_id', 'ship_id']; break;
         case 3: break;
     }
     const isValid = fields.length > 0 ? await trigger(fields) : true;
@@ -360,7 +432,16 @@ export default function AddVehiclePage() {
         <ErrorAlert error={createVehicle.error} />
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <Box sx={{ minHeight: 200, p: 2 }}><StepContent step={activeStep} setVin={setVin} vinAvailable={vinAvailable} /></Box>
+            <Box sx={{ minHeight: 200, p: 2 }}>
+              <StepContent 
+                step={activeStep} 
+                setVin={setVin} 
+                vinAvailable={vinAvailable}
+                terminals={terminals}
+                carriers={carriers}
+                ships={ships}
+              />
+            </Box>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
                 <Button disabled={activeStep === 0} onClick={handleBack} sx={{ mr: 1 }}>Back</Button>
                 {activeStep === steps.length - 1 ? (

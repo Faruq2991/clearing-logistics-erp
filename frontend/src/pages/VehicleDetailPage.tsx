@@ -34,8 +34,9 @@ import { useAuth } from '../contexts/AuthContext';
 import DocumentsTab from '../components/DocumentsTab';
 import FinancialsTab from '../components/FinancialsTab';
 import type { VehicleResponse } from '../types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useVehicle, useUpdateVehicleStatus, useDeleteVehicle } from '../hooks/useVehicles';
+import { api } from '../services/api';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -127,6 +128,23 @@ export default function VehicleDetailPage() {
   const { mutateAsync: updateStatus, isPending: isUpdatingStatus } = useUpdateVehicleStatus(vehicleId!);
   const { mutateAsync: deleteVehicle, isPending: isDeleting } = useDeleteVehicle();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [terminalName, setTerminalName] = useState('');
+  const [shipName, setShipName] = useState('');
+
+  useEffect(() => {
+    if (vehicle) {
+      if (vehicle.terminal_id) {
+        api.get(`/terminals/${vehicle.terminal_id}`)
+          .then(response => setTerminalName(response.data.name))
+          .catch(err => console.error('Failed to fetch terminal name', err));
+      }
+      if (vehicle.ship_id) {
+        api.get(`/ships/${vehicle.ship_id}`)
+          .then(response => setShipName(response.data.name))
+          .catch(err => console.error('Failed to fetch ship name', err));
+      }
+    }
+  }, [vehicle]);
 
   const handleStatusChange = async (newStatus: string) => {
     if (vehicle && newStatus !== vehicle.status) {
@@ -232,8 +250,8 @@ export default function VehicleDetailPage() {
               <Card>
                 <CardHeader title="Shipping & Status" />
                 <CardContent>
-                  <Typography><strong>Ship:</strong> {vehicle.ship_name ?? '—'}</Typography>
-                  <Typography><strong>Terminal:</strong> {vehicle.terminal ?? '—'}</Typography>
+                  <Typography><strong>Ship:</strong> {shipName || '—'}</Typography>
+                  <Typography><strong>Terminal:</strong> {terminalName || '—'}</Typography>
                    <Typography>
                     <strong>Arrival Date:</strong>{' '}
                     {vehicle.arrival_date ? new Date(vehicle.arrival_date).toLocaleDateString() : '—'}

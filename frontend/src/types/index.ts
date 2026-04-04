@@ -31,8 +31,9 @@ export interface VehicleCreate {
   model: string;
   year: number;
   color?: string;
-  ship_name?: string;
-  terminal?: string;
+  terminal_id?: number;
+  carrier_id?: number;
+  ship_id?: number;
   arrival_date?: string;
   status?: string;
   agencies?: number;
@@ -48,6 +49,23 @@ export interface VehicleCreate {
   comet_shipping?: number;
   terminal_charges?: number;
   clearance_type?: 'FULL' | 'RELEASE_GATE';
+}
+
+export interface Terminal {
+  id: number;
+  name: string;
+}
+
+export interface Carrier {
+  id: number;
+  name: string;
+  terminal_id: number;
+}
+
+export interface Ship {
+  id: number;
+  name: string;
+  carrier_id: number;
 }
 
 export interface VehicleResponse extends VehicleCreate {

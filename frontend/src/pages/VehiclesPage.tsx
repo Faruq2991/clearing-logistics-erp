@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { Box, Button, Typography, Chip, TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { DataGrid, type GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef, GridActionsCellItem, type GridRenderCellParams } from '@mui/x-data-grid';
 import { Add as AddIcon, Visibility as ViewIcon } from '@mui/icons-material';
 import { useVehicles } from '../hooks/useVehicles';
 import type { VehicleResponse } from '../types';
@@ -29,7 +29,7 @@ const calculateTotalCost = (vehicle: VehicleResponse) => {
   return costFields.reduce((total, field) => total + (Number(vehicle[field]) || 0), 0);
 };
 
-const columns: GridColDef[] = [
+const columns: GridColDef<VehicleResponse>[] = [
   { field: 'vin', headerName: 'VIN', flex: 1.5 },
   { field: 'make', headerName: 'Make', flex: 1 },
   { field: 'model', headerName: 'Model', flex: 1 },
@@ -38,19 +38,19 @@ const columns: GridColDef[] = [
     field: 'clearance_type',
     headerName: 'Service Type',
     flex: 1,
-    valueFormatter: (params) => {
+    renderCell: (params: GridRenderCellParams<VehicleResponse, string | undefined>) => {
       if (params.value === 'FULL') return 'Full Vehicle Clearance';
       if (params.value === 'RELEASE_GATE') return 'Release & Gate Only';
-      return params.value;
+      return params.value || '—';
     },
   },
   {
     field: 'totalCost',
     headerName: 'Amount',
     flex: 1,
-    valueGetter: (value, row) => calculateTotalCost(row),
+    valueGetter: (_, row) => calculateTotalCost(row),
     renderCell: (params) => (
-      <span>{new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(params.value)}</span>
+      <span>{new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(params.value as number)}</span>
     ),
   },
   {

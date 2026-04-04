@@ -101,7 +101,7 @@ export default function FinancialsTab({ vehicleId }: FinancialsTabProps) {
                     onChange={(e) => setTotalCost(Number(e.target.value))}
                     onFocus={() => {
                         if (totalCost === 0) {
-                            setTotalCost('');
+                            setTotalCost(0);
                         }
                     }}
                     sx={{ mb: 2 }}
